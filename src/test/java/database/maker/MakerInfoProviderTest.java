@@ -5,14 +5,19 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import server.MakerItemFactory;
-import testutil.Any;
+import testutil.AnyValues;
 import tools.Pair;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class MakerInfoProviderTest {
 
@@ -80,7 +85,7 @@ class MakerInfoProviderTest {
     void getRecipeFromDb_notFound() {
         givenNoRecipe();
 
-        Optional<MakerRecipe> recipe = makerInfoProvider.getMakerRecipe(Any.integer());
+        Optional<MakerRecipe> recipe = makerInfoProvider.getMakerRecipe(AnyValues.integer());
 
         assertTrue(recipe.isEmpty());
     }
@@ -111,7 +116,7 @@ class MakerInfoProviderTest {
         MakerRecipe recipeWithCatalyst = new MakerRecipe(0, (short) 0, (short) 0, (short) 0, 0, null, null, catalyst, (short) 0, (short) 0);
         when(makerDao.getRecipe(anyInt())).thenReturn(Optional.of(recipeWithCatalyst));
 
-        Optional<Integer> stimulant = makerInfoProvider.getStimulant(Any.integer());
+        Optional<Integer> stimulant = makerInfoProvider.getStimulant(AnyValues.integer());
 
         assertTrue(stimulant.isPresent());
         assertEquals(catalyst, stimulant.get());
@@ -121,7 +126,7 @@ class MakerInfoProviderTest {
     void getStimulant_noRecipe() {
         givenNoRecipe();
 
-        Optional<Integer> stimulant = makerInfoProvider.getStimulant(Any.integer());
+        Optional<Integer> stimulant = makerInfoProvider.getStimulant(AnyValues.integer());
 
         assertTrue(stimulant.isEmpty());
     }

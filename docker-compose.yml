@@ -23,14 +23,13 @@ services:
       PG_DB_HOST: "pg_db"
 
   db:
-    image: mysql:8.0.23
+    image: mysql:8.4.0
+    environment:
+      MYSQL_DATABASE: "cosmic"
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
     ports:
       - "3307:3306"
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "true"
-      MYSQL_DATABASE: "cosmic"
-      MYSQL_USER: "cosmic_server"
-      MYSQL_PASSWORD: "snailshell"
     volumes:
       - ./database/docker-db-data:/var/lib/mysql
       - ./database/sql:/docker-entrypoint-initdb.d

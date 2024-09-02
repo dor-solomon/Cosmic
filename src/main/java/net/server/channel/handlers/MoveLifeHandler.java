@@ -27,7 +27,12 @@ import config.YamlConfig;
 import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.life.*;
+import server.life.MobSkill;
+import server.life.MobSkillFactory;
+import server.life.MobSkillId;
+import server.life.MobSkillType;
+import server.life.Monster;
+import server.life.MonsterInformationProvider;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
@@ -168,7 +173,7 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
 
         if (banishPlayers != null) {
             for (Character chr : banishPlayers) {
-                chr.changeMapBanish(monster.getBanish().getMap(), monster.getBanish().getPortal(), monster.getBanish().getMsg());
+                chr.changeMapBanish(monster.getBanish());
             }
         }
     }

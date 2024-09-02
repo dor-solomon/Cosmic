@@ -21,9 +21,20 @@
  */
 package net.server.channel.handlers;
 
+import client.BuddyList;
+import client.BuddylistEntry;
 import client.Character;
-import client.*;
-import client.inventory.*;
+import client.Client;
+import client.Disease;
+import client.Family;
+import client.FamilyEntry;
+import client.Mount;
+import client.SkillFactory;
+import client.inventory.Equip;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
+import client.inventory.Item;
+import client.inventory.Pet;
 import client.keybind.KeyBinding;
 import config.YamlConfig;
 import constants.game.GameConstants;
@@ -59,8 +70,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class PlayerLoggedinHandler extends AbstractPacketHandler {
@@ -422,11 +439,6 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                                 entry -> Integer.parseInt(entry.getKey()),
                                 Entry::getValue
                         ));
-
-                // Any npc be specified as the rebirth npc. Allow the npc to use custom scripts explicitly.
-                if (YamlConfig.config.server.USE_REBIRTH_SYSTEM) {
-                    npcsIds.put(YamlConfig.config.server.REBIRTH_NPC_ID, "Rebirth");
-                }
 
                 c.sendPacket(PacketCreator.setNPCScriptable(npcsIds));
             }

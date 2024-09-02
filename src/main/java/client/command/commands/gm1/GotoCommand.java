@@ -29,7 +29,11 @@ import client.command.Command;
 import client.command.CommandContext;
 import constants.game.GameConstants;
 import constants.id.NpcId;
-import server.maps.*;
+import server.maps.FieldLimit;
+import server.maps.MapFactory;
+import server.maps.MapleMap;
+import server.maps.MiniDungeonInfo;
+import server.maps.Portal;
 
 import java.util.ArrayList;
 import java.util.HashMap;

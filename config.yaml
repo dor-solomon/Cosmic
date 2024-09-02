@@ -161,8 +161,8 @@ server:
     #Database Configuration
     DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic" # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker) 
     DB_HOST: "localhost" 
-    DB_USER: "cosmic_server"
-    DB_PASS: "snailshell"
+    DB_USER: "root"
+    DB_PASS: ""
     INIT_CONNECTION_POOL_TIMEOUT: 90    # Seconds
 
     PG_DB_NAME: "cosmic"
@@ -228,7 +228,6 @@ server:
     USE_MTS: false
     USE_CPQ: true                       #Renders the CPQ available or not.
     USE_AUTOHIDE_GM: true              #When enabled, GMs are automatically hidden when joining. Thanks to Steven Deblois (steven1152).
-    USE_BUYBACK_SYSTEM: false            #Enables the HeavenMS-builtin buyback system, to be used by dead players when clicking the MTS button.
     USE_FIXED_RATIO_HPMP_UPDATE: false   #Enables the HeavenMS-builtin HPMP update based on the current pool to max pool ratio.
     USE_FAMILY_SYSTEM: true
     USE_DUEY: true
@@ -256,17 +255,15 @@ server:
     USE_ENFORCE_UNMERCHABLE_PET: true   #Forces players to not sell pets via merchants, drops of it disappears. (since non-named pets gets dirty name and other possible DB-related issues)
     USE_ENFORCE_MDOOR_POSITION: false   #Forces mystic door to be spawned near spawnpoints.
     USE_SPAWN_CLEAN_MDOOR: false         #Makes mystic doors to be spawned without deploy animation. This clears disconnecting issues that may happen when trying to cancel doors a couple seconds after deployment.
-    USE_SPAWN_LOOT_ON_ANIMATION: false  #Makes loot appear some time after the mob has been killed (following the mob death animation, instead of instantly).
     USE_SPAWN_RELEVANT_LOOT: true       #Forces to only spawn loots that are collectable by the player or any of their party members.
     USE_ERASE_PERMIT_ON_OPENSHOP: true  #Forces "shop permit" item to be consumed when player deploy his/her player shop.
     USE_ERASE_UNTRADEABLE_DROP: true    #Forces flagged untradeable items to disappear when dropped.
     USE_ERASE_PET_ON_EXPIRATION: false  #Forces pets to be removed from inventory when expire time comes, rather than converting it to a doll.
     USE_BUFF_MOST_SIGNIFICANT: true     #When applying buffs, the player will stick with the highest stat boost among the listed, rather than overwriting stats.
     USE_BUFF_EVERLASTING: false         #Every applied buff on players holds expiration time so high it'd be considered permanent. Suggestion thanks to Vcoc.
-    USE_BANISHABLE_TOWN_SCROLL: false    #Enables town scrolls to act as if it's a "player banish", rendering the antibanish scroll effect available.
+    USE_MULTIPLE_SAME_EQUIP_DROP: true  #Enables multiple drops by mobs of the same equipment, number of possible drops based on the quantities provided at the drop data.
     USE_ENABLE_FULL_RESPAWN: false       #At respawn task, always respawn missing mobs when they're available. Spawn count doesn't depend on how many players are currently there.
     USE_ENABLE_CHAT_LOG: false          #Write in-game chat to log
-    USE_REBIRTH_SYSTEM: false           #Flag to enable/disable rebirth system
     USE_MAP_OWNERSHIP_SYSTEM: false      #Flag to enable/disable map ownership system
     USE_FISHING_SYSTEM: false            #Flag to enable/disable custom fishing system
     USE_NPCS_SCRIPTABLE: true           #Flag to enable/disable serverside predefined script NPCs.
@@ -324,7 +321,6 @@ server:
     NAME_CHANGE_COOLDOWN: 2592000000      # (30*24*60*60*1000) Cooldown for name changes, default (GMS) is 30 days.
     WORLD_TRANSFER_COOLDOWN: 2592000000  # (30*24*60*60*1000) Cooldown for world tranfers, default is same as name change (30 days).
     INSTANT_NAME_CHANGE: false              #Whether or not to wait for server restart to apply name changes. Does on reconnect otherwise (requires queries on every login).
-    REBIRTH_NPC_ID: 9010021                 #ID of the NPC that should be replaced with the rebirth mechanic, if enabled.
 
     #Dangling Items/Locks Configuration
     ITEM_EXPIRE_TIME: 180000    # (3 * 60 * 1000) Time before items start disappearing. Recommended to be set up to 3 minutes.
@@ -352,7 +348,6 @@ server:
     USE_PERFECT_SCROLLING: false     #Scrolls doesn't use slots upon failure.
     USE_ENHANCED_CHSCROLL: false     #Equips even more powerful with chaos upgrade.
     USE_ENHANCED_CRAFTING: false     #Apply chaos scroll on every equip crafted.
-    USE_ENHANCED_CLNSLATE: false     #Clean slates can be applied to recover successfully used slots as well.
     SCROLL_CHANCE_ROLLS: 1         #Number of rolls for success on a scroll, set 1 for default.
     CHSCROLL_STAT_RATE: 1               #Number of rolls of stat upgrade on a successfully applied chaos scroll, set 1 for default.
     CHSCROLL_STAT_RANGE: 6              #Stat upgrade range (-N, N) on chaos scrolls.
@@ -401,7 +396,6 @@ server:
     USE_EQUIPMNT_LVLUP_SLOTS: false  #Equips can upgrade slots at level up.
     USE_EQUIPMNT_LVLUP_POWER: false  #Enable more powerful stat upgrades at equip level up.
     USE_EQUIPMNT_LVLUP_CASH: false   #Enable equip leveling up on cash equipments as well.
-    USE_SPIKES_AVOID_BANISH: false   #Shoes equipped with spikes prevents mobs from banishing wearer.
     MAX_EQUIPMNT_LVLUP_STAT_UP: 10000   #Max stat upgrade an equipment can have on a levelup.
     MAX_EQUIPMNT_STAT: 32767            #Max stat on an equipment by leveling up.
     USE_EQUIPMNT_LVLUP: 1               #All equips lvlup at max level of N, set 1 to disable.
@@ -451,14 +445,6 @@ server:
     WEDDING_BLESS_EXP: 30000            #Exp gained per bless count.
     WEDDING_GIFT_LIMIT: 1               #Max number of gifts per person to same wishlist on marriage instances.
     WEDDING_BLESSER_SHOWFX: true    #Pops bubble sprite effect on players blessing the couple. Setting this false shows the blessing effect on the couple instead.
-
-    #Buyback Configuration
-    USE_BUYBACK_WITH_MESOS: true    #Enables usage of either mesos or NX for the buyback fee.
-    BUYBACK_FEE: 77.70               #Sets the base amount needed to buyback (level 30 or under will use the base value).
-    BUYBACK_LEVEL_STACK_FEE: 85.47   #Sets the level-stacking portion of the amount needed to buyback (fee will sum up linearly until level 120, when it reaches the peak).
-    BUYBACK_MESO_MULTIPLIER: 1000       #Sets a multiplier for the fee when using meso as the charge unit.
-    BUYBACK_RETURN_MINUTES: 1           #Sets the maximum amount of time the player can wait before decide to buyback.
-    BUYBACK_COOLDOWN_MINUTES: 7         #Sets the time the player must wait before using buyback again.
 
     # Login timeout by shavit
     TIMEOUT_DURATION: 3600000               # Kicks clients who don't send any packet to the game server in due time (in millisseconds).

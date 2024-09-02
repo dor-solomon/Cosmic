@@ -24,8 +24,17 @@ package client;
 
 import client.autoban.AutobanManager;
 import client.creator.CharacterFactoryRecipe;
-import client.inventory.*;
+import client.inventory.Equip;
 import client.inventory.Equip.StatUpgrade;
+import client.inventory.Inventory;
+import client.inventory.InventoryProof;
+import client.inventory.InventoryType;
+import client.inventory.Item;
+import client.inventory.ItemFactory;
+import client.inventory.ModifyInventory;
+import client.inventory.Pet;
+import client.inventory.PetDataFactory;
+import client.inventory.WeaponType;
 import client.inventory.manipulator.CashIdGenerator;
 import client.inventory.manipulator.InventoryManipulator;
 import client.keybind.KeyBinding;
@@ -40,7 +49,35 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import constants.id.MobId;
 import constants.inventory.ItemConstants;
-import constants.skills.*;
+import constants.skills.Aran;
+import constants.skills.Beginner;
+import constants.skills.Bishop;
+import constants.skills.BlazeWizard;
+import constants.skills.Bowmaster;
+import constants.skills.Brawler;
+import constants.skills.Buccaneer;
+import constants.skills.Corsair;
+import constants.skills.Crusader;
+import constants.skills.DarkKnight;
+import constants.skills.DawnWarrior;
+import constants.skills.Evan;
+import constants.skills.FPArchMage;
+import constants.skills.Hermit;
+import constants.skills.Hero;
+import constants.skills.ILArchMage;
+import constants.skills.Legend;
+import constants.skills.Magician;
+import constants.skills.Marauder;
+import constants.skills.Marksman;
+import constants.skills.NightLord;
+import constants.skills.Noblesse;
+import constants.skills.Paladin;
+import constants.skills.Priest;
+import constants.skills.Ranger;
+import constants.skills.Shadower;
+import constants.skills.Sniper;
+import constants.skills.ThunderBreaker;
+import constants.skills.Warrior;
 import model.CharacterIdentity;
 import net.netty.GameViolationException;
 import net.packet.Packet;
@@ -52,22 +89,59 @@ import net.server.guild.Alliance;
 import net.server.guild.Guild;
 import net.server.guild.GuildCharacter;
 import net.server.guild.GuildPackets;
-import net.server.world.*;
+import net.server.world.Messenger;
+import net.server.world.MessengerCharacter;
+import net.server.world.Party;
+import net.server.world.PartyCharacter;
+import net.server.world.PartyOperation;
+import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractPlayerInteraction;
 import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
-import server.*;
+import server.CashShop;
+import server.ExpLogger;
 import server.ExpLogger.ExpLogRecord;
+import server.ItemInformationProvider;
 import server.ItemInformationProvider.ScriptedItem;
+import server.Marriage;
+import server.StatEffect;
+import server.Storage;
+import server.ThreadManager;
+import server.TimerManager;
+import server.Trade;
 import server.events.Events;
 import server.events.RescueGaga;
 import server.events.gm.Fitness;
 import server.events.gm.Ola;
-import server.life.*;
-import server.maps.*;
+import server.life.BanishInfo;
+import server.life.MobSkill;
+import server.life.MobSkillFactory;
+import server.life.MobSkillId;
+import server.life.MobSkillType;
+import server.life.Monster;
+import server.life.PlayerNPC;
+import server.maps.AbstractAnimatedMapObject;
+import server.maps.Door;
+import server.maps.DoorObject;
+import server.maps.Dragon;
+import server.maps.FieldLimit;
+import server.maps.HiredMerchant;
+import server.maps.MapEffect;
+import server.maps.MapItem;
+import server.maps.MapManager;
+import server.maps.MapObject;
+import server.maps.MapObjectType;
+import server.maps.MapleMap;
+import server.maps.MiniGame;
 import server.maps.MiniGame.MiniGameResult;
+import server.maps.PlayerShop;
+import server.maps.PlayerShopItem;
+import server.maps.Portal;
+import server.maps.SavedLocation;
+import server.maps.SavedLocationType;
+import server.maps.Summon;
 import server.minigame.RockPaperScissor;
 import server.partyquest.AriantColiseum;
 import server.partyquest.MonsterCarnival;
@@ -75,17 +149,38 @@ import server.partyquest.MonsterCarnivalParty;
 import server.partyquest.PartyQuest;
 import server.quest.Quest;
 import server.shop.Shop;
-import tools.*;
-import tools.exceptions.NotEnabledException;
+import tools.DatabaseConnection;
+import tools.LongTool;
+import tools.PacketCreator;
+import tools.Pair;
+import tools.Randomizer;
 import tools.packets.WeddingPackets;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -95,7 +190,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Character extends AbstractCharacterObject {
     private static final Logger log = LoggerFactory.getLogger(Character.class);
@@ -129,7 +226,7 @@ public class Character extends AbstractCharacterObject {
     private int expRate = 1, mesoRate = 1, dropRate = 1, expCoupon = 1, mesoCoupon = 1, dropCoupon = 1;
     private int omokwins, omokties, omoklosses, matchcardwins, matchcardties, matchcardlosses;
     private int owlSearch;
-    private long lastfametime, lastUsedCashItem, lastExpression = 0, lastHealed, lastBuyback = 0, lastDeathtime, jailExpiration = -1;
+    private long lastfametime, lastUsedCashItem, lastExpression = 0, lastHealed, lastDeathtime, jailExpiration = -1;
     private transient int localstr, localdex, localluk, localint_, localmagic, localwatk;
     private transient int equipmaxhp, equipmaxmp, equipstr, equipdex, equipluk, equipint_, equipmagic, equipwatk, localchairhp, localchairmp;
     private int localchairrate;
@@ -255,9 +352,6 @@ public class Character extends AbstractCharacterObject {
     private int targetHpBarHash = 0;
     private long targetHpBarTime = 0;
     private long nextWarningTime = 0;
-    private int banishMap = -1;
-    private int banishSp = -1;
-    private long banishTime = 0;
     private long lastExpGainTime;
     private boolean pendingNameChange; //only used to change name on logout, not to be relied upon elsewhere
     private long loginTime;
@@ -1259,48 +1353,14 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    public boolean canRecoverLastBanish() {
-        return System.currentTimeMillis() - this.banishTime < MINUTES.toMillis(5);
-    }
-
-    public Pair<Integer, Integer> getLastBanishData() {
-        return new Pair<>(this.banishMap, this.banishSp);
-    }
-
-    public void clearBanishPlayerData() {
-        this.banishMap = -1;
-        this.banishSp = -1;
-        this.banishTime = 0;
-    }
-
-    public void setBanishPlayerData(int banishMap, int banishSp, long banishTime) {
-        this.banishMap = banishMap;
-        this.banishSp = banishSp;
-        this.banishTime = banishTime;
-    }
-
-    public void changeMapBanish(int mapid, String portal, String msg) {
-        if (YamlConfig.config.server.USE_SPIKES_AVOID_BANISH) {
-            for (Item it : this.getInventory(InventoryType.EQUIPPED).list()) {
-                if ((it.getFlag() & ItemConstants.SPIKES) == ItemConstants.SPIKES) {
-                    return;
-                }
-            }
-        }
-
-        int banMap = this.getMapId();
-        int banSp = this.getMap().findClosestPlayerSpawnpoint(this.getPosition()).getId();
-        long banTime = System.currentTimeMillis();
-
-        if (msg != null) {
-            dropMessage(5, msg);
+    public void changeMapBanish(BanishInfo banishInfo) {
+        if (banishInfo.msg() != null) {
+            dropMessage(5, banishInfo.msg());
         }
 
         MapleMap map_ = getWarpMap(mapid);
-        Portal portal_ = map_.getPortal(portal);
+        Portal portal_ = map_.getPortal(banishInfo.portal());
         changeMap(map_, portal_ != null ? portal_ : map_.getRandomPlayerSpawnpoint());
-
-        setBanishPlayerData(banMap, banSp, banTime);
     }
 
     public void changeMap(int map) {
@@ -1684,7 +1744,6 @@ public class Character extends AbstractCharacterObject {
         this.mapTransitioning.set(true);
 
         this.unregisterChairBuff();
-        this.clearBanishPlayerData();
         Trade.cancelTrade(this, Trade.TradeResult.UNSUCCESSFUL_ANOTHER_MAP);
         this.closePlayerInteractions();
 
@@ -1972,7 +2031,7 @@ public class Character extends AbstractCharacterObject {
                                 this.getCashShop().gainCash(1, nxGain);
 
                                 if (YamlConfig.config.server.USE_ANNOUNCE_NX_COUPON_LOOT) {
-                                    showHint("You have earned #e#b" + nxGain + " NX#k#n. (" + this.getCashShop().getCash(1) + " NX)", 300);
+                                    showHint("You have earned #e#b" + nxGain + " NX#k#n. (" + this.getCashShop().getCash(CashShop.NX_CREDIT) + " NX)", 300);
                                 }
 
                                 this.getMap().pickItemDrop(pickupPacket, mapitem);
@@ -2024,7 +2083,7 @@ public class Character extends AbstractCharacterObject {
                         this.getCashShop().gainCash(1, nxGain);
 
                         if (YamlConfig.config.server.USE_ANNOUNCE_NX_COUPON_LOOT) {
-                            showHint("You have earned #e#b" + nxGain + " NX#k#n. (" + this.getCashShop().getCash(1) + " NX)", 300);
+                            showHint("You have earned #e#b" + nxGain + " NX#k#n. (" + this.getCashShop().getCash(CashShop.NX_CREDIT) + " NX)", 300);
                         }
                     } else if (applyConsumeOnPickup(mItem.getItemId())) {
                     } else if (InventoryManipulator.addFromDrop(client, mItem, true)) {
@@ -5967,7 +6026,8 @@ public class Character extends AbstractCharacterObject {
             sendPacket(PacketCreator.giveBuff(energybar, 0, stat));
             sendPacket(PacketCreator.showOwnBuffEffect(energycharge.getId(), 2));
             getMap().broadcastPacket(this, PacketCreator.showBuffEffect(id, energycharge.getId(), 2));
-            getMap().broadcastPacket(this, PacketCreator.giveForeignBuff(energybar, stat));
+            getMap().broadcastPacket(this, PacketCreator.giveForeignPirateBuff(id, energycharge.getId(),
+                    ceffect.getDuration(), stat));
         }
         if (energybar >= 10000 && energybar < 11000) {
             energybar = 15000;
@@ -6056,98 +6116,11 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    private boolean canBuyback(int fee, boolean usingMesos) {
-        return (usingMesos ? this.getMeso() : cashshop.getCash(1)) >= fee;
-    }
-
-    private void applyBuybackFee(int fee, boolean usingMesos) {
-        if (usingMesos) {
-            this.gainMeso(-fee);
-        } else {
-            cashshop.gainCash(1, -fee);
-        }
-    }
-
-    private long getNextBuybackTime() {
-        return lastBuyback + MINUTES.toMillis(YamlConfig.config.server.BUYBACK_COOLDOWN_MINUTES);
-    }
-
-    private boolean isBuybackInvincible() {
-        return Server.getInstance().getCurrentTime() - lastBuyback < 4200;
-    }
-
-    private int getBuybackFee() {
-        float fee = YamlConfig.config.server.BUYBACK_FEE;
-        int grade = Math.min(Math.max(level, 30), 120) - 30;
-
-        fee += (grade * YamlConfig.config.server.BUYBACK_LEVEL_STACK_FEE);
-        if (YamlConfig.config.server.USE_BUYBACK_WITH_MESOS) {
-            fee *= YamlConfig.config.server.BUYBACK_MESO_MULTIPLIER;
-        }
-
-        return (int) Math.floor(fee);
-    }
-
-    public void showBuybackInfo() {
-        String s = "#eBUYBACK STATUS#n\r\n\r\nCurrent buyback fee: #b" + getBuybackFee() + " " + (YamlConfig.config.server.USE_BUYBACK_WITH_MESOS ? "mesos" : "NX") + "#k\r\n\r\n";
-
-        long timeNow = Server.getInstance().getCurrentTime();
-        boolean avail = true;
-        if (!isAlive()) {
-            long timeLapsed = timeNow - lastDeathtime;
-            long timeRemaining = MINUTES.toMillis(YamlConfig.config.server.BUYBACK_RETURN_MINUTES) - (timeLapsed + Math.max(0, getNextBuybackTime() - timeNow));
-            if (timeRemaining < 1) {
-                s += "Buyback #e#rUNAVAILABLE#k#n";
-                avail = false;
-            } else {
-                s += "Buyback countdown: #e#b" + getTimeRemaining(MINUTES.toMillis(YamlConfig.config.server.BUYBACK_RETURN_MINUTES) - timeLapsed) + "#k#n";
-            }
-            s += "\r\n";
-        }
-
-        if (timeNow < getNextBuybackTime() && avail) {
-            s += "Buyback available in #r" + getTimeRemaining(getNextBuybackTime() - timeNow) + "#k";
-            s += "\r\n";
-        } else {
-            s += "Buyback #bavailable#k";
-        }
-
-        this.showHint(s);
-    }
-
     private static String getTimeRemaining(long timeLeft) {
         int seconds = (int) Math.floor(timeLeft / SECONDS.toMillis(1)) % 60;
         int minutes = (int) Math.floor(timeLeft / MINUTES.toMillis(1)) % 60;
 
         return (minutes > 0 ? (String.format("%02d", minutes) + " minutes, ") : "") + String.format("%02d", seconds) + " seconds";
-    }
-
-    public boolean couldBuyback() {  // Ronan's buyback system
-        long timeNow = Server.getInstance().getCurrentTime();
-
-        if (timeNow - lastDeathtime > MINUTES.toMillis(YamlConfig.config.server.BUYBACK_RETURN_MINUTES)) {
-            this.dropMessage(5, "The period of time to decide has expired, therefore you are unable to buyback.");
-            return false;
-        }
-
-        long nextBuybacktime = getNextBuybackTime();
-        if (timeNow < nextBuybacktime) {
-            long timeLeft = nextBuybacktime - timeNow;
-            this.dropMessage(5, "Next buyback available in " + getTimeRemaining(timeLeft) + ".");
-            return false;
-        }
-
-        boolean usingMesos = YamlConfig.config.server.USE_BUYBACK_WITH_MESOS;
-        int fee = getBuybackFee();
-
-        if (!canBuyback(fee, usingMesos)) {
-            this.dropMessage(5, "You don't have " + fee + " " + (usingMesos ? "mesos" : "NX") + " to buyback.");
-            return false;
-        }
-
-        lastBuyback = timeNow;
-        applyBuybackFee(fee, usingMesos);
-        return true;
     }
 
     public boolean isBuffFrom(BuffStat stat, Skill skill) {
@@ -8878,11 +8851,7 @@ public class Character extends AbstractCharacterObject {
         boolean playerDied = false;
         if (hp <= 0) {
             if (oldHp > hp) {
-                if (!isBuybackInvincible()) {
-                    playerDied = true;
-                } else {
-                    hp = 1;
-                }
+                playerDied = true;
             }
         }
 
@@ -10913,68 +10882,31 @@ public class Character extends AbstractCharacterObject {
         this.commandtext = text;
     }
 
-    public void setReborns(int value) {
-        if (!YamlConfig.config.server.USE_REBIRTH_SYSTEM) {
-            yellowMessage("Rebirth system is not enabled!");
-            throw new NotEnabledException();
-        }
-
+    public int getRewardPoints() {
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE characters SET reborns=? WHERE id=?;")) {
+             PreparedStatement ps = con.prepareStatement("SELECT rewardpoints FROM accounts WHERE id=?;")) {
+            ps.setInt(1, accountid);
+            ResultSet resultSet = ps.executeQuery();
+            int point = -1;
+            if (resultSet.next()) {
+                point = resultSet.getInt(1);
+            }
+            return point;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public void setRewardPoints(int value) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET rewardpoints=? WHERE id=?;")) {
             ps.setInt(1, value);
-            ps.setInt(2, id);
+            ps.setInt(2, accountid);
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    public void addReborns() {
-        setReborns(getReborns() + 1);
-    }
-
-    public int getReborns() {
-        if (!YamlConfig.config.server.USE_REBIRTH_SYSTEM) {
-            yellowMessage("Rebirth system is not enabled!");
-            throw new NotEnabledException();
-        }
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT reborns FROM characters WHERE id=?;")) {
-            ps.setInt(1, id);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        throw new RuntimeException();
-    }
-
-    public void executeReborn() {
-        // default to beginner: job id = 0
-        // this prevents a breaking change
-        executeRebornAs(Job.BEGINNER);
-    }
-
-    public void executeRebornAsId(int jobId) {
-        executeRebornAs(Job.getById(jobId));
-    }
-
-    public void executeRebornAs(Job job) {
-        if (!YamlConfig.config.server.USE_REBIRTH_SYSTEM) {
-            yellowMessage("Rebirth system is not enabled!");
-            throw new NotEnabledException();
-        }
-        if (getLevel() != getMaxClassLevel()) {
-            return;
-        }
-        addReborns();
-        changeJob(job);
-        setLevel(0);
-        levelUp(true);
     }
 
     //EVENTS

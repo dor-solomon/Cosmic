@@ -8,17 +8,24 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import testutil.Any;
+import testutil.AnyValues;
 import testutil.Mocks;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static testutil.Any.daoException;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static testutil.AnyValues.daoException;
 
 class NoteServiceTest {
 
@@ -73,7 +80,7 @@ class NoteServiceTest {
     void sendFailure() {
         doThrow(daoException()).when(noteDao).save(any());
 
-        boolean success = noteService.sendNormal(Any.string(), Any.string(), Any.string());
+        boolean success = noteService.sendNormal(AnyValues.string(), AnyValues.string(), AnyValues.string());
 
         assertFalse(success);
         verify(noteDao).save(any());

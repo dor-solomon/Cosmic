@@ -289,6 +289,10 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         gainMeso(-loss);
     }
 
+    public void gainMeso(Double gain) {
+        getPlayer().gainMeso(gain.intValue());
+    }
+
     public void gainExp(int gain) {
         getPlayer().gainExp(gain, true, true);
     }

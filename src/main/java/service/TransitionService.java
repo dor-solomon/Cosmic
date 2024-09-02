@@ -10,7 +10,11 @@ import net.server.Server;
 import net.server.guild.Guild;
 import net.server.guild.GuildCharacter;
 import net.server.guild.GuildPackets;
-import net.server.world.*;
+import net.server.world.MessengerCharacter;
+import net.server.world.Party;
+import net.server.world.PartyCharacter;
+import net.server.world.PartyOperation;
+import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
@@ -77,7 +81,6 @@ public class TransitionService {
 
         chr.getInventory(InventoryType.EQUIPPED).checked(false); //test
         chr.getMap().removePlayer(chr);
-        chr.clearBanishPlayerData();
         c.getChannelServer().removePlayer(chr);
 
         chrSaver.save(chr);

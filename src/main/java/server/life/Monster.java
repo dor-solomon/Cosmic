@@ -21,13 +21,26 @@
  */
 package server.life;
 
+import client.BuffStat;
 import client.Character;
-import client.*;
+import client.Client;
+import client.FamilyEntry;
+import client.Job;
+import client.Skill;
+import client.SkillFactory;
 import client.status.MonsterStatus;
 import client.status.MonsterStatusEffect;
 import config.YamlConfig;
 import constants.id.MobId;
-import constants.skills.*;
+import constants.skills.Crusader;
+import constants.skills.FPMage;
+import constants.skills.Hermit;
+import constants.skills.ILMage;
+import constants.skills.NightLord;
+import constants.skills.NightWalker;
+import constants.skills.Priest;
+import constants.skills.Shadower;
+import constants.skills.WhiteKnight;
 import database.drop.DropProvider;
 import net.packet.Packet;
 import net.server.channel.Channel;
@@ -44,7 +57,6 @@ import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.StatEffect;
 import server.TimerManager;
-import server.life.LifeFactory.BanishInfo;
 import server.loot.LootManager;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
@@ -57,9 +69,17 @@ import tools.Randomizer;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -807,12 +827,12 @@ public class Monster extends AbstractLoadedLife {
                                 }
 
                                 if (htKilled) {
-                                    reviveMap.killMonster(ht, killer, true);
+                                    reviveMap.killMonster(ht, killer, true, (short) 0);
                                 }
                             }
 
                             for (int i = MobId.DEAD_HORNTAIL_MAX; i >= MobId.DEAD_HORNTAIL_MIN; i--) {
-                                reviveMap.killMonster(reviveMap.getMonsterById(i), killer, true);
+                                reviveMap.killMonster(reviveMap.getMonsterById(i), killer, true, (short) 0);
                             }
                         } else if (controller != null) {
                             mob.aggroSwitchController(controller, aggro);
