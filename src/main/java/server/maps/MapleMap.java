@@ -1442,6 +1442,8 @@ public class MapleMap {
             monster.dispatchMonsterKilled(true);
             broadcastMessage(PacketCreator.killMonster(monster.getObjectId(), animation), monster.getPosition());
         }
+
+
     }
 
     public void killFriendlies(Monster mob) {
