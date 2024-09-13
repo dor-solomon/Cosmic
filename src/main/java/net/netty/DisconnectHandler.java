@@ -17,7 +17,7 @@ public class DisconnectHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         if (cause instanceof DisconnectException de) {
             var client = de.getClient();
-            transitionService.disconnect(client, true);
+            transitionService.disconnect(client, de.isShutdown());
         } else {
             ctx.fireExceptionCaught(cause);
         }
