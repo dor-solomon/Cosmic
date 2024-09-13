@@ -108,14 +108,8 @@ public class TransitionService {
     }
 
     private void disconnectInternal(Client c, boolean shutdown) {
-        var chr = c.getPlayer();
+        final var chr = c.getPlayer();
         if (chr != null && chr.isLoggedin() && chr.getClient() != null) {
-            final int messengerid = chr.getMessenger() == null ? 0 : chr.getMessenger().getId();
-            final BuddyList bl = chr.getBuddylist();
-            final MessengerCharacter messengerChr = new MessengerCharacter(chr, 0);
-            final GuildCharacter guildChr = chr.getMGC();
-            final Guild guild = chr.getGuild();
-
             chr.cancelMagicDoor();
 
             final World wserv = c.getWorldServer();   // obviously wserv is NOT null if this chr was online on it
@@ -125,18 +119,22 @@ public class TransitionService {
                 final int channel = c.getChannel();
                 if (!(channel == LoginServer.CHANNEL_ID || shutdown)) {
                     if (!c.isInTransition()) { // meaning not changing channels
+                        final int messengerid = chr.getMessenger() == null ? 0 : chr.getMessenger().getId();
                         if (messengerid > 0) {
-                            wserv.leaveMessenger(messengerid, messengerChr);
+                            wserv.leaveMessenger(messengerid, new MessengerCharacter(chr, 0));
                         }
 
                         chr.forfeitExpirableQuests();    //This is for those quests that you have to stay logged in for a certain amount of time
 
+                        Guild guild = chr.getGuild();
                         if (guild != null) {
                             final Server server = Server.getInstance();
                             server.setGuildMemberOnline(chr, false, chr.getClient().getChannel());
                             chr.sendPacket(GuildPackets.showGuildInfo(chr));
                         }
-                        if (bl != null) {
+
+                        BuddyList buddyList = chr.getBuddylist();
+                        if (buddyList != null) {
                             wserv.loggedOff(chr.getName(), chr.getId(), channel, chr.getBuddylist().getBuddyIds());
                         }
                     }
@@ -145,6 +143,7 @@ public class TransitionService {
                 log.error("Account stuck", e);
             } finally {
                 if (!c.isInTransition()) {
+                    final GuildCharacter guildChr = chr.getMGC();
                     if (guildChr != null) {
                         guildChr.setCharacter(null);
                     }
