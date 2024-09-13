@@ -753,7 +753,7 @@ public class MapleMap {
             chRate = 1;
         }
 
-        final List<MonsterGlobalDropEntry> globalEntry = dropProvider.getRelevantGlobalDrops(this.getId());
+        final List<MonsterGlobalDropEntry> globalEntry = new ArrayList<>(dropProvider.getRelevantGlobalDrops(this.getId()));
 
         final List<MonsterDropEntry> dropEntry = new ArrayList<>();
         final List<MonsterDropEntry> visibleQuestEntry = new ArrayList<>();
