@@ -32,7 +32,7 @@ public class BanService {
         chr.ban(reason);
 
         chr.sendPacket(PacketCreator.sendPolice("You have been blocked by the#b %s Police for HACK reason.#k".formatted("Cosmic")));
-        TimerManager.getInstance().schedule(() -> transitionService.disconnect(chr.getClient(), false, false),
+        TimerManager.getInstance().schedule(() -> transitionService.disconnect(chr.getClient(), false),
                 TimeUnit.SECONDS.toMillis(5));
 
         var bannedName = Character.makeMapleReadable(chr.getName());

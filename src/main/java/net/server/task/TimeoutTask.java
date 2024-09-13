@@ -28,7 +28,7 @@ public class TimeoutTask extends BaseTask implements Runnable {
         for (Character chr : chars) {
             if (time - chr.getClient().getLastPacket() > YamlConfig.config.server.TIMEOUT_DURATION) {
                 log.info("Chr {} auto-disconnected due to inactivity", chr.getName());
-                transitionService.disconnect(chr.getClient(), true, chr.getCashShop().isOpened());
+                transitionService.disconnect(chr.getClient(), true);
             }
         }
     }

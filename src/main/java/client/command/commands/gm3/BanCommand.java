@@ -78,7 +78,7 @@ public class BanCommand extends Command {
             c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
             final Character rip = target;
             TimerManager.getInstance().schedule(
-                    () -> ctx.transitionService().disconnect(rip.getClient(), false, false),
+                    () -> ctx.transitionService().disconnect(rip.getClient(), false),
                     TimeUnit.SECONDS.toMillis(5)
             );
             Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "[RIP]: " + ign + " has been banned."));

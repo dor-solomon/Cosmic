@@ -1755,31 +1755,30 @@ public class Character extends AbstractCharacterObject {
 
         sendPacket(warpPacket);
         map.removePlayer(this);
-        if (client.getChannelServer().getPlayerStorage().getCharacterById(getId()) != null) {
-            map = to;
-            setPosition(pos);
-            map.addPlayer(this);
-            visitMap(map);
-
-            prtLock.lock();
-            try {
-                if (party != null) {
-                    mpc.setMapId(to.getId());
-                    sendPacket(PacketCreator.updateParty(client.getChannel(), party, PartyOperation.SILENT_UPDATE, null));
-                    updatePartyMemberHPInternal();
-                }
-            } finally {
-                prtLock.unlock();
-            }
-            if (Character.this.getParty() != null) {
-                Character.this.getParty().setEnemy(k);
-            }
-            silentPartyUpdateInternal(getParty());  // EIM script calls inside
-        } else {
+        if (client.getChannelServer().getPlayerStorage().getCharacterById(id) == null) {
             log.warn("Chr {} got stuck when moving to map {}", getName(), map.getId());
-            client.disconnect(true, false);     // thanks BHB for noticing a player storage stuck case here
             return;
         }
+
+        map = to;
+        setPosition(pos);
+        map.addPlayer(this);
+        visitMap(map);
+
+        prtLock.lock();
+        try {
+            if (party != null) {
+                mpc.setMapId(to.getId());
+                sendPacket(PacketCreator.updateParty(client.getChannel(), party, PartyOperation.SILENT_UPDATE, null));
+                updatePartyMemberHPInternal();
+            }
+        } finally {
+            prtLock.unlock();
+        }
+        if (Character.this.getParty() != null) {
+            Character.this.getParty().setEnemy(k);
+        }
+        silentPartyUpdateInternal(getParty());  // EIM script calls inside
 
         notifyMapTransferToPartner(map.getId());
 
@@ -8175,20 +8174,14 @@ public class Character extends AbstractCharacterObject {
         return false;
     }
 
-    // TODO: all callers should use CharacterSaver instead.
-    // It's supposed to act as a proxy to these 2 methods (as a first step towards taking full ownership of character saving)
-    public void saveCharToDB() {
-        saveCharToDB(true);
-    }
-
     //ItemFactory saveItems and monsterbook.saveCards are the most time consuming here.
-    public synchronized void saveCharToDB(boolean notAutosave) {
+    public synchronized void saveCharToDB() {
         if (!loggedIn) {
             return;
         }
 
         Calendar c = Calendar.getInstance();
-        log.debug("Attempting to {} chr {}", notAutosave ? "save" : "autosave", name);
+        log.debug("Saving chr {}", name);
 
         Server.getInstance().updateCharacterEntry(this);
 

@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package client;
 
 import config.YamlConfig;
-import constants.id.MapId;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -41,34 +40,24 @@ import net.server.coordinator.login.LoginBypassCoordinator;
 import net.server.coordinator.session.Hwid;
 import net.server.coordinator.session.SessionCoordinator;
 import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
-import net.server.guild.Guild;
-import net.server.guild.GuildCharacter;
-import net.server.guild.GuildPackets;
-import net.server.world.MessengerCharacter;
 import net.server.world.Party;
-import net.server.world.PartyCharacter;
-import net.server.world.PartyOperation;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.AbstractPlayerInteraction;
-import scripting.event.EventInstanceManager;
 import scripting.event.EventManager;
 import scripting.npc.NPCConversationManager;
 import scripting.npc.NPCScriptManager;
 import scripting.quest.QuestActionManager;
 import scripting.quest.QuestScriptManager;
-import server.ThreadManager;
 import server.TimerManager;
 import server.life.Monster;
-import server.maps.MapleMap;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 import tools.HexTool;
 import tools.PacketCreator;
 
 import javax.script.ScriptEngine;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -212,7 +201,8 @@ public class Client extends ChannelInboundHandlerAdapter {
                 MonitoredChrLogger.logPacketIfMonitored(this, opcode, packet.getBytes());
                 handler.handlePacket(packet, this);
             } catch (GameViolationException gve) {
-                throw new DisconnectException(this, gve.getMessage());
+                log.warn("Game violation (disconnecting): {}", gve.getMessage());
+                throw new DisconnectException(this, true);
             } catch (final Throwable t) {
                 final String chrInfo = player != null ? player.getName() + " on map " + player.getMapId() : "?";
                 log.warn("Error in packet handler {}. Chr {}, account {}. Packet: {}", handler.getClass().getSimpleName(),
@@ -232,15 +222,13 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         if (player != null) {
             log.warn("Exception caught by {}", player, cause);
         }
 
         if (cause instanceof InvalidPacketHeaderException) {
             SessionCoordinator.getInstance().closeSession(this, true);
-        } else if (cause instanceof IOException) {
-            closeMapleSession();
         } else {
             ctx.fireExceptionCaught(cause);
         }
@@ -248,10 +236,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        closeMapleSession();
-    }
-
-    private void closeMapleSession() {
         switch (type) {
             case LOGIN -> SessionCoordinator.getInstance().closeLoginSession(this);
             case CHANNEL -> SessionCoordinator.getInstance().closeSession(this, false);
@@ -260,7 +244,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         try {
             // client freeze issues on session transition states found thanks to yolinlin, Omo Oppa, Nozphex
             if (!inTransition) {
-                disconnect(false, false);
+                ctx.fireExceptionCaught(new DisconnectException(this, false));
             }
         } catch (Throwable t) {
             log.warn("Account stuck", t);
@@ -693,11 +677,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void updateLoginState(int newState) {
-        // rules out possibility of multiple account entries
-        if (newState == LOGIN_LOGGEDIN) {
-            SessionCoordinator.getInstance().updateOnlineClient(this);
-        }
-
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = ?, lastlogin = ? WHERE id = ?")) {
             // using sql currenttime here could potentially break the login, thanks Arnah for pointing this out
@@ -770,85 +749,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return date.get(Calendar.YEAR) == birthday.get(Calendar.YEAR) && date.get(Calendar.MONTH) == birthday.get(Calendar.MONTH) && date.get(Calendar.DAY_OF_MONTH) == birthday.get(Calendar.DAY_OF_MONTH);
     }
 
-    private void removePartyPlayer(World wserv) {
-        MapleMap map = player.getMap();
-        final Party party = player.getParty();
-        final int idz = player.getId();
-
-        if (party != null) {
-            final PartyCharacter chrp = new PartyCharacter(player);
-            chrp.setOnline(false);
-            wserv.updateParty(party.getId(), PartyOperation.LOG_ONOFF, chrp);
-            if (party.getLeader().getId() == idz && map != null) {
-                PartyCharacter lchr = null;
-                for (PartyCharacter pchr : party.getMembers()) {
-                    if (pchr != null && pchr.getId() != idz && (lchr == null || lchr.getLevel() <= pchr.getLevel()) && map.getCharacterById(pchr.getId()) != null) {
-                        lchr = pchr;
-                    }
-                }
-                if (lchr != null) {
-                    wserv.updateParty(party.getId(), PartyOperation.CHANGE_LEADER, lchr);
-                }
-            }
-        }
-    }
-
-    private void removePlayer(World wserv, boolean serverTransition) {
-        try {
-            player.setDisconnectedFromChannelWorld();
-            player.notifyMapTransferToPartner(-1);
-            player.removeIncomingInvites();
-            player.cancelAllBuffs(true);
-
-            player.closePlayerInteractions();
-            player.closePartySearchInteractions();
-
-            if (!serverTransition) {    // thanks MedicOP for detecting an issue with party leader change on changing channels
-                removePartyPlayer(wserv);
-
-                EventInstanceManager eim = player.getEventInstance();
-                if (eim != null) {
-                    eim.playerDisconnected(player);
-                }
-
-                if (player.getMonsterCarnival() != null) {
-                    player.getMonsterCarnival().playerDisconnected(getPlayer().getId());
-                }
-
-                if (player.getAriantColiseum() != null) {
-                    player.getAriantColiseum().playerDisconnected(getPlayer());
-                }
-            }
-
-            if (player.getMap() != null) {
-                int mapId = player.getMapId();
-                player.getMap().removePlayer(player);
-                if (MapId.isDojo(mapId)) {
-                    this.getChannelServer().freeDojoSectionIfEmpty(mapId);
-                }
-                
-                if (player.getMap().getHPDec() > 0) {
-                    getWorldServer().removePlayerHpDecrease(player);
-                }
-            }
-
-        } catch (final Throwable t) {
-            log.error("Account stuck", t);
-        }
-    }
-
-    public final void disconnect(final boolean shutdown, final boolean cashshop) {
-        if (tryDisconnect()) {
-            ThreadManager.getInstance().newTask(() -> disconnectInternal(shutdown, cashshop));
-        }
-    }
-
-    public final void forceDisconnect() {
-        if (tryDisconnect()) {
-            disconnectInternal(true, false);
-        }
-    }
-
     public synchronized boolean tryDisconnect() {
         if (disconnecting) {
             return false;
@@ -856,88 +756,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         disconnecting = true;
         return true;
-    }
-
-    private void disconnectInternal(boolean shutdown, boolean cashshop) {//once per Client instance
-        if (player != null && player.isLoggedin() && player.getClient() != null) {
-            final int messengerid = player.getMessenger() == null ? 0 : player.getMessenger().getId();
-            final BuddyList bl = player.getBuddylist();
-            final MessengerCharacter messengerChr = new MessengerCharacter(player, 0);
-            final GuildCharacter guildChr = player.getMGC();
-            final Guild guild = player.getGuild();
-
-            player.cancelMagicDoor();
-
-            final World wserv = getWorldServer();   // obviously wserv is NOT null if this player was online on it
-            try {
-                removePlayer(wserv, this.serverTransition);
-
-                if (!(channel == -1 || shutdown)) {
-                    if (!cashshop) {
-                        if (!this.serverTransition) { // meaning not changing channels
-                            if (messengerid > 0) {
-                                wserv.leaveMessenger(messengerid, messengerChr);
-                            }
-
-                            player.forfeitExpirableQuests();    //This is for those quests that you have to stay logged in for a certain amount of time
-
-                            if (guild != null) {
-                                final Server server = Server.getInstance();
-                                server.setGuildMemberOnline(player, false, player.getClient().getChannel());
-                                player.sendPacket(GuildPackets.showGuildInfo(player));
-                            }
-                            if (bl != null) {
-                                wserv.loggedOff(player.getName(), player.getId(), channel, player.getBuddylist().getBuddyIds());
-                            }
-                        }
-                    } else {
-                        if (!this.serverTransition) { // if dc inside of cash shop.
-                            if (bl != null) {
-                                wserv.loggedOff(player.getName(), player.getId(), channel, player.getBuddylist().getBuddyIds());
-                            }
-                        }
-                    }
-                }
-            } catch (final Exception e) {
-                log.error("Account stuck", e);
-            } finally {
-                if (!this.serverTransition) {
-                    if (guildChr != null) {
-                        guildChr.setCharacter(null);
-                    }
-                    wserv.removePlayer(player);
-                    //getChannelServer().removePlayer(player); already being done
-
-                    player.cancelAllDebuffs();
-                    player.saveCharToDB();
-
-                    player.logOff();
-                    if (YamlConfig.config.server.INSTANT_NAME_CHANGE) {
-                        player.doPendingNameChange();
-                    }
-                    clear();
-                } else {
-                    getChannelServer().removePlayer(player);
-
-                    player.cancelAllDebuffs();
-                    player.saveCharToDB();
-                }
-            }
-        }
-
-        SessionCoordinator.getInstance().closeSession(this, false);
-
-        if (!serverTransition && isLoggedIn()) {
-            updateLoginState(Client.LOGIN_NOTLOGGEDIN);
-
-            clear();
-        } else {
-            if (!Server.getInstance().hasCharacteridInTransition(this)) {
-                updateLoginState(Client.LOGIN_NOTLOGGEDIN);
-            }
-
-            engines = null; // thanks Tochi for pointing out a NPE here
-        }
     }
 
     public void clear() {
@@ -954,6 +772,12 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.birthday = null;
         this.engines = null;
         this.player = null;
+    }
+
+    public void clearEngines() {
+        if (engines != null) {
+            engines.clear();
+        }
     }
 
     public void setCharacterOnSessionTransitionState(int cid) {

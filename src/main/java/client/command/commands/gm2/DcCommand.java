@@ -49,7 +49,7 @@ public class DcCommand extends Command {
                 victim = player.getMap().getCharacterByName(chrName);
                 if (victim != null) {
                     try {//sometimes bugged because the map = null
-                        ctx.transitionService().disconnect(victim.getClient(), true, false);
+                        ctx.transitionService().disconnect(victim.getClient(), true);
                         player.getMap().removePlayer(victim);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -62,6 +62,6 @@ public class DcCommand extends Command {
         if (player.gmLevel() < victim.gmLevel()) {
             victim = player;
         }
-        ctx.transitionService().disconnect(victim.getClient(), false, false);
+        ctx.transitionService().disconnect(victim.getClient(), false);
     }
 }

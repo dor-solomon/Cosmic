@@ -6,7 +6,9 @@ import client.inventory.InventoryType;
 import config.YamlConfig;
 import constants.id.MapId;
 import database.character.CharacterSaver;
+import net.netty.LoginServer;
 import net.server.Server;
+import net.server.coordinator.session.SessionCoordinator;
 import net.server.guild.Guild;
 import net.server.guild.GuildCharacter;
 import net.server.guild.GuildPackets;
@@ -39,7 +41,7 @@ public class TransitionService {
     public void changeChannel(Client c, int channel) {
         var chr = c.getPlayer();
         if (chr.isBanned()) {
-            disconnect(c, false, false);
+            disconnect(c, false);
             return;
         }
 
@@ -93,21 +95,19 @@ public class TransitionService {
         }
     }
 
-    // TODO: take code from Client#disconnect & forceDisconnect. Move it here.
-    // It's not gonna be easy to move all instances of c.disconnect, but it has to be done.
-    public void disconnect(final Client c, final boolean shutdown, final boolean cashShop) {
+    public void disconnect(final Client c, final boolean shutdown) {
         if (c.tryDisconnect()) {
-            ThreadManager.getInstance().newTask(() -> disconnectInternal(c, shutdown, cashShop));
+            ThreadManager.getInstance().newTask(() -> disconnectInternal(c, shutdown));
         }
     }
 
     public void forceDisconnect(Client c) {
         if (c.tryDisconnect()) {
-            disconnectInternal(c, true, false);
+            disconnectInternal(c, true);
         }
     }
 
-    private void disconnectInternal(Client c, boolean shutdown, boolean cashShop) {
+    private void disconnectInternal(Client c, boolean shutdown) {
         var chr = c.getPlayer();
         if (chr != null && chr.isLoggedin() && chr.getClient() != null) {
             final int messengerid = chr.getMessenger() == null ? 0 : chr.getMessenger().getId();
@@ -123,29 +123,21 @@ public class TransitionService {
                 removePlayer(c, wserv, c.isInTransition());
 
                 final int channel = c.getChannel();
-                if (!(channel == -1 || shutdown)) {
-                    if (!cashShop) {
-                        if (!c.isInTransition()) { // meaning not changing channels
-                            if (messengerid > 0) {
-                                wserv.leaveMessenger(messengerid, messengerChr);
-                            }
-
-                            chr.forfeitExpirableQuests();    //This is for those quests that you have to stay logged in for a certain amount of time
-
-                            if (guild != null) {
-                                final Server server = Server.getInstance();
-                                server.setGuildMemberOnline(chr, false, chr.getClient().getChannel());
-                                chr.sendPacket(GuildPackets.showGuildInfo(chr));
-                            }
-                            if (bl != null) {
-                                wserv.loggedOff(chr.getName(), chr.getId(), channel, chr.getBuddylist().getBuddyIds());
-                            }
+                if (!(channel == LoginServer.CHANNEL_ID || shutdown)) {
+                    if (!c.isInTransition()) { // meaning not changing channels
+                        if (messengerid > 0) {
+                            wserv.leaveMessenger(messengerid, messengerChr);
                         }
-                    } else {
-                        if (!c.isInTransition()) { // if dc inside of cash shop.
-                            if (bl != null) {
-                                wserv.loggedOff(chr.getName(), chr.getId(), channel, chr.getBuddylist().getBuddyIds());
-                            }
+
+                        chr.forfeitExpirableQuests();    //This is for those quests that you have to stay logged in for a certain amount of time
+
+                        if (guild != null) {
+                            final Server server = Server.getInstance();
+                            server.setGuildMemberOnline(chr, false, chr.getClient().getChannel());
+                            chr.sendPacket(GuildPackets.showGuildInfo(chr));
+                        }
+                        if (bl != null) {
+                            wserv.loggedOff(chr.getName(), chr.getId(), channel, chr.getBuddylist().getBuddyIds());
                         }
                     }
                 }
@@ -174,6 +166,20 @@ public class TransitionService {
                     chrSaver.save(chr);
                 }
             }
+        }
+
+        SessionCoordinator.getInstance().closeSession(c, false);
+
+
+        if (!c.isInTransition() && c.isLoggedIn()) {
+            c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+            c.clear();
+        } else {
+            if (!Server.getInstance().hasCharacteridInTransition(c)) {
+                c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+            }
+
+            c.clearEngines();
         }
     }
 

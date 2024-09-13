@@ -1923,7 +1923,7 @@ public class Server {
 
         for (Client c : toDisconnect) {    // thanks Lei for pointing a deadlock issue with srvLock
             if (c.isLoggedIn()) {
-                channelDependencies.transitionService().disconnect(c, false, false);
+                channelDependencies.transitionService().disconnect(c, false);
             } else {
                 SessionCoordinator.getInstance().closeSession(c, true);
             }

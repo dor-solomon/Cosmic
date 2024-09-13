@@ -195,7 +195,7 @@ public final class AdminCommandHandler extends AbstractPacketHandler {
     private void sendPolice(Client c, String reason) {
         c.sendPacket(PacketCreator.sendPolice(String.format("You have been blocked by the#b %s Police for %s.#k", "Cosmic", reason)));
         c.getPlayer().setBanned();
-        TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false, false),
+        TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false),
                 TimeUnit.SECONDS.toMillis(6));
     }
 }

@@ -41,7 +41,7 @@ public class DCAllCommand extends Command {
         for (World world : Server.getInstance().getWorlds()) {
             for (Character chr : world.getPlayerStorage().getAllCharacters()) {
                 if (!chr.isGM()) {
-                    ctx.transitionService().disconnect(chr.getClient(), false, false);
+                    ctx.transitionService().disconnect(chr.getClient(), false);
                 }
             }
         }

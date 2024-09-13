@@ -11,7 +11,7 @@ public class CharacterSaver {
     }
 
     public void save(Character chr) {
-        chr.saveCharToDB(false);
+        chr.saveCharToDB();
 
         // Saving monster cards to both MySQL and Postgres for now
         monsterCardDao.save(chr.getId(), chr.getMonsterBook().getCards());
