@@ -57,7 +57,7 @@ public final class AfterLoginHandler extends AbstractPacketHandler {
                 c.sendPacket(PacketCreator.requestPinAfterFailure());
             }
         } else if (c2 == 0 && c3 == 5) {
-            SessionCoordinator.getInstance().closeSession(c, null);
+            SessionCoordinator.getInstance().closeSession(c, false);
             c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
         }
     }

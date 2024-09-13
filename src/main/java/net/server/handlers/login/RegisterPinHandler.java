@@ -35,7 +35,7 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
     public final void handlePacket(InPacket p, Client c) {
         byte c2 = p.readByte();
         if (c2 == 0) {
-            SessionCoordinator.getInstance().closeSession(c, null);
+            SessionCoordinator.getInstance().closeSession(c, false);
             c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
         } else {
             String pin = p.readString();
@@ -43,7 +43,7 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
                 c.setPin(pin);
                 c.sendPacket(PacketCreator.pinRegistered());
 
-                SessionCoordinator.getInstance().closeSession(c, null);
+                SessionCoordinator.getInstance().closeSession(c, false);
                 c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
             }
         }

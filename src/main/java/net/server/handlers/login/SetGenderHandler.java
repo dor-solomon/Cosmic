@@ -43,7 +43,7 @@ public class SetGenderHandler extends AbstractPacketHandler {
 
                 Server.getInstance().registerLoginState(c);
             } else {
-                SessionCoordinator.getInstance().closeSession(c, null);
+                SessionCoordinator.getInstance().closeSession(c, false);
                 c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
             }
         }

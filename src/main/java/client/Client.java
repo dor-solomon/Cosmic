@@ -78,11 +78,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -256,7 +254,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private void closeMapleSession() {
         switch (type) {
             case LOGIN -> SessionCoordinator.getInstance().closeLoginSession(this);
-            case CHANNEL -> SessionCoordinator.getInstance().closeSession(this, null);
+            case CHANNEL -> SessionCoordinator.getInstance().closeSession(this, false);
         }
 
         try {

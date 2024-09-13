@@ -294,7 +294,7 @@ public class SessionCoordinator {
         return fakeClient;
     }
 
-    public void closeSession(Client client, Boolean immediately) {
+    public void closeSession(Client client, boolean immediately) {
         if (client == null) {
             client = fetchInTransitionSessionClient(client);
         }
@@ -317,7 +317,7 @@ public class SessionCoordinator {
             }
         }
 
-        if (immediately != null && immediately) {
+        if (immediately) {
             client.closeSession();
         }
     }
