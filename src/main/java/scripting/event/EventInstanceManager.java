@@ -51,8 +51,15 @@ import tools.Pair;
 
 import javax.script.ScriptException;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -1095,10 +1102,6 @@ public class EventInstanceManager {
 
     public final void setEventCleared() {
         eventCleared = true;
-
-        for (Character chr : getPlayers()) {
-            chr.awardQuestPoint(YamlConfig.config.server.QUEST_POINT_PER_EVENT_CLEAR);
-        }
 
         scriptLock.lock();
         try {

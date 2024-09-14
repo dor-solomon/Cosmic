@@ -221,12 +221,6 @@ public class ServerConfig {
     //Quest Configuration
     public boolean USE_QUEST_RATE;
 
-    //Quest Points Configuration
-    public int QUEST_POINT_REPEATABLE_INTERVAL;
-    public int QUEST_POINT_REQUIREMENT;
-    public int QUEST_POINT_PER_QUEST_COMPLETE;
-    public int QUEST_POINT_PER_EVENT_CLEAR;
-
     //Guild Configuration
     public int CREATE_GUILD_MIN_PARTNERS;
     public int CREATE_GUILD_COST;

@@ -53,7 +53,6 @@ public record CharacterStats(
         int omokLosses,
         int omokTies,
         String dataString,
-        int questFame,
         long jailExpiration,
         int partnerId,
         int marriageItemId,

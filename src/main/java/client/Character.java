@@ -205,7 +205,7 @@ public class Character extends AbstractCharacterObject {
     private int accountid, id, level;
     private int rank, rankMove, jobRank, jobRankMove;
     private int gender, hair, face;
-    private int fame, quest_fame;
+    private int fame;
     private int initialSpawnPoint;
     private int mapid;
     private int currentPage, currentType = 0, currentTab = 1;
@@ -6864,7 +6864,6 @@ public class Character extends AbstractCharacterObject {
                     ret.name = rs.getString("name");
                     ret.level = rs.getInt("level");
                     ret.fame = rs.getInt("fame");
-                    ret.quest_fame = rs.getInt("fquest");
                     ret.str = rs.getInt("str");
                     ret.dex = rs.getInt("dex");
                     ret.int_ = rs.getInt("int");
@@ -8439,7 +8438,7 @@ public class Character extends AbstractCharacterObject {
 
     private void saveCharacter(Connection con) throws SQLException {
         CharacterStats stats = getCharacterStats();
-        try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, stats.level());
             ps.setInt(2, stats.fame());
             ps.setInt(3, stats.str());
@@ -8488,14 +8487,13 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(46, stats.omokLosses());
             ps.setInt(47, stats.omokTies());
             ps.setString(48, stats.dataString());
-            ps.setInt(49, stats.questFame());
-            ps.setLong(50, stats.jailExpiration());
-            ps.setInt(51, stats.partnerId());
-            ps.setInt(52, stats.marriageItemId());
-            ps.setTimestamp(53, new Timestamp(stats.lastExpGainTime()));
-            ps.setInt(54, stats.ariantPoints());
-            ps.setBoolean(55, stats.canRecvPartySearchInvite());
-            ps.setInt(56, stats.id());
+            ps.setLong(49, stats.jailExpiration());
+            ps.setInt(50, stats.partnerId());
+            ps.setInt(51, stats.marriageItemId());
+            ps.setTimestamp(52, new Timestamp(stats.lastExpGainTime()));
+            ps.setInt(53, stats.ariantPoints());
+            ps.setBoolean(54, stats.canRecvPartySearchInvite());
+            ps.setInt(55, stats.id());
 
             int updateRows = ps.executeUpdate();
             if (updateRows < 1) {
@@ -8533,7 +8531,6 @@ public class Character extends AbstractCharacterObject {
                 .omokLosses(omoklosses)
                 .omokTies(omokties)
                 .dataString(dataString)
-                .questFame(quest_fame)
                 .jailExpiration(jailExpiration)
                 .partnerId(partnerId)
                 .marriageItemId(marriageItemid)
@@ -9686,24 +9683,6 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    public void awardQuestPoint(int awardedPoints) {
-        if (YamlConfig.config.server.QUEST_POINT_REQUIREMENT < 1 || awardedPoints < 1) {
-            return;
-        }
-
-        int delta;
-        synchronized (quests) {
-            quest_fame += awardedPoints;
-
-            delta = quest_fame / YamlConfig.config.server.QUEST_POINT_REQUIREMENT;
-            quest_fame %= YamlConfig.config.server.QUEST_POINT_REQUIREMENT;
-        }
-
-        if (delta > 0) {
-            gainFame(delta);
-        }
-    }
-
     public enum DelayedQuestUpdate {    // quest updates allow player actions during NPC talk...
         UPDATE, FORFEIT, COMPLETE, INFO
     }
@@ -9769,9 +9748,6 @@ public class Character extends AbstractCharacterObject {
         } else if (qs.getStatus().equals(QuestStatus.Status.COMPLETED)) {
             Quest mquest = qs.getQuest();
             short questid = mquest.getId();
-            if (!mquest.isSameDayRepeatable() && !Quest.isExploitableQuest(questid)) {
-                awardQuestPoint(YamlConfig.config.server.QUEST_POINT_PER_QUEST_COMPLETE);
-            }
             qs.setCompleted(qs.getCompleted() + 1);   // Jayd's idea - count quest completed
 
             announceUpdateQuest(DelayedQuestUpdate.COMPLETE, questid, qs.getCompletionTime());
