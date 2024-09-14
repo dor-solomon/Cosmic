@@ -136,7 +136,6 @@ CREATE TABLE IF NOT EXISTS `characters` (
   `skincolor` int(11) NOT NULL DEFAULT '0',
   `gender` int(11) NOT NULL DEFAULT '0',
   `fame` int(11) NOT NULL DEFAULT '0',
-  `fquest` int(11) NOT NULL DEFAULT '0',
   `hair` int(11) NOT NULL DEFAULT '0',
   `face` int(11) NOT NULL DEFAULT '0',
   `ap` int(11) NOT NULL DEFAULT '0',

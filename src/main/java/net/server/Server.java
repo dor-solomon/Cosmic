@@ -44,6 +44,7 @@ import constants.net.ServerConstants;
 import database.PgDatabaseConfig;
 import database.PgDatabaseConnection;
 import database.character.CharacterLoader;
+import database.character.CharacterRepository;
 import database.character.CharacterSaver;
 import database.drop.DropProvider;
 import database.drop.DropRepository;
@@ -972,12 +973,17 @@ public class Server {
         if (pgDbHost == null) {
             pgDbHost = serverConfig.PG_DB_HOST;
         }
-        return new PgDatabaseConfig(
-                serverConfig.PG_DB_NAME, pgDbHost, serverConfig.PG_DB_SCHEMA,
-                serverConfig.PG_DB_ADMIN_USERNAME, serverConfig.PG_DB_ADMIN_PASSWORD,
-                serverConfig.PG_DB_USERNAME, serverConfig.PG_DB_PASSWORD,
-                Duration.ofSeconds(serverConfig.INIT_CONNECTION_POOL_TIMEOUT)
-        );
+        return PgDatabaseConfig.builder()
+                .databaseName(serverConfig.PG_DB_NAME)
+                .host(pgDbHost)
+                .schema(serverConfig.PG_DB_SCHEMA)
+                .adminUsername(serverConfig.PG_DB_ADMIN_USERNAME)
+                .adminPassword(serverConfig.PG_DB_ADMIN_PASSWORD)
+                .username(serverConfig.PG_DB_USERNAME)
+                .password(serverConfig.PG_DB_PASSWORD)
+                .poolInitTimeout(Duration.ofSeconds(serverConfig.INIT_CONNECTION_POOL_TIMEOUT))
+                .clean(serverConfig.PG_DB_CLEAN)
+                .build();
     }
 
     private void runDatabaseMigration(PgDatabaseConfig config) {
@@ -1002,9 +1008,10 @@ public class Server {
     }
 
     private ChannelDependencies registerChannelDependencies(PgDatabaseConnection connection) {
+        CharacterRepository characterRepository = new CharacterRepository();
         MonsterCardRepository monsterCardRepository = new MonsterCardRepository(connection);
         CharacterLoader characterLoader = new CharacterLoader(monsterCardRepository);
-        CharacterSaver characterSaver = new CharacterSaver(connection, monsterCardRepository);
+        CharacterSaver characterSaver = new CharacterSaver(connection, characterRepository, monsterCardRepository);
         TransitionService transitionService = new TransitionService(characterSaver);
         BanService banService = new BanService(transitionService);
         NoteService noteService = new NoteService(new NoteDao(connection));

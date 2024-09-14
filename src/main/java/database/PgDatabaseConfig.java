@@ -1,12 +1,16 @@
 package database;
 
+import lombok.Builder;
+
 import java.time.Duration;
 
+@Builder
 public record PgDatabaseConfig(
         String databaseName, String host, String schema,
         String adminUsername, String adminPassword,
         String username, String password,
-        Duration poolInitTimeout
+        Duration poolInitTimeout,
+        boolean clean
 ) {
     public PgDatabaseConfig {
         verifyNotBlank(databaseName);

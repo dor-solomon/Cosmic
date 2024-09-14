@@ -172,6 +172,7 @@ server:
     PG_DB_ADMIN_PASSWORD: "redsnailshell"
     PG_DB_USERNAME: "cosmic_server"
     PG_DB_PASSWORD: "bluesnailshell"
+    PG_DB_CLEAN: false                   # !!! WARNING !!! Deletes the entire database - starts from scratch.
 
     #Login Configuration
     WORLDS: 1                           #Initial number of worlds on the server.

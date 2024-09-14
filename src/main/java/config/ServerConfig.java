@@ -20,6 +20,7 @@ public class ServerConfig {
     public String PG_DB_ADMIN_PASSWORD;
     public String PG_DB_USERNAME;
     public String PG_DB_PASSWORD;
+    public boolean PG_DB_CLEAN;
 
     //Login Configuration
     public int WORLDS;

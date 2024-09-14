@@ -24,7 +24,11 @@ public class FlywayRunner {
                         "server-username", dbConfig.username(),
                         "server-password", dbConfig.password())
                 )
+                .cleanDisabled(!dbConfig.clean())
                 .load();
+        if (dbConfig.clean()) {
+            flyway.clean();
+        }
         flyway.migrate();
     }
 }

@@ -3,9 +3,8 @@ package database.character;
 import client.Character;
 import database.PgDatabaseConnection;
 import database.monsterbook.MonsterCardRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
@@ -13,14 +12,17 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 
+@Slf4j
 public class CharacterSaver {
-    private static final Logger log = LoggerFactory.getLogger(CharacterSaver.class);
     private final PgDatabaseConnection pgConnection;
+    private final CharacterRepository characterRepository;
     private final MonsterCardRepository monsterCardRepository;
 
     public CharacterSaver(PgDatabaseConnection pgConnection,
+                          CharacterRepository characterRepository,
                           MonsterCardRepository monsterCardRepository) {
         this.pgConnection = pgConnection;
+        this.characterRepository = characterRepository;
         this.monsterCardRepository = monsterCardRepository;
     }
 
@@ -61,13 +63,16 @@ public class CharacterSaver {
 
         try (Handle handle = pgConnection.getHandle()) {
             handle.useTransaction(h -> doPostgresSave(h, chr));
+        } catch (Exception e) {
+            log.error("Error saving chr {} to PG", chr.getName(), e);
         }
 
         Duration saveDuration = Duration.between(before, Instant.now());
-        log.debug("Saved {} to Postgres in {} ms", chr.getName(), saveDuration.toMillis());
+        log.debug("Saved {} to PostgreSQL in {} ms", chr.getName(), saveDuration.toMillis());
     }
 
     private void doPostgresSave(Handle handle, Character chr) {
+        characterRepository.update(handle, chr.getCharacterStats());
         monsterCardRepository.save(handle, chr.getId(), chr.getMonsterBook().getCards());
     }
 

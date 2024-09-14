@@ -8461,7 +8461,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(21, stats.mapId());
             ps.setInt(22, stats.meso());
             ps.setInt(23, stats.hpMpApUsed());
-            ps.setInt(24, stats.spawnPoint());
+            ps.setInt(24, stats.spawnPortal());
             ps.setInt(25, stats.party());
             ps.setInt(26, stats.buddyCapacity());
             ps.setInt(27, stats.messenger());
@@ -8515,7 +8515,7 @@ public class Character extends AbstractCharacterObject {
                 .meso(meso.get())
                 .hpMpApUsed(hpMpApUsed)
                 .mapId(getSaveMap())
-                .spawnPoint(getSaveSpawnpoint())
+                .spawnPortal(getSaveSpawnPortal())
                 .buddyCapacity(buddylist.getCapacity())
                 .monsterBookCover(bookCover)
                 .dojoVanquisherStage(vanquisherStage)
@@ -8607,7 +8607,7 @@ public class Character extends AbstractCharacterObject {
         return map.getId();
     }
 
-    private int getSaveSpawnpoint() {
+    private int getSaveSpawnPortal() {
         if (map == null || map.getId() == MapId.CRIMSONWOOD_VALLEY_1 || map.getId() == MapId.CRIMSONWOOD_VALLEY_2) { // TODO: clean up. Shouldn't hardcode these maps.
             return 0;
         }

@@ -28,7 +28,7 @@ public record CharacterStats(
         int mapId,
         int meso,
         int hpMpApUsed,
-        int spawnPoint,
+        int spawnPortal,
         int party,
         int buddyCapacity,
         int messenger,
