@@ -72,6 +72,7 @@
         <postgresql.version>42.5.4</postgresql.version> <!-- PostgreSQL JDBC driver -->
         <flyway.version>9.15.1</flyway.version> <!-- Database migration -->
         <caffeine.version>3.1.4</caffeine.version> <!-- Caching -->
+        <lombok.version>1.18.34</lombok.version> <!-- Code generation -->
     </properties>
 
     <dependencies>
@@ -89,6 +90,12 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>${caffeine.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Database -->

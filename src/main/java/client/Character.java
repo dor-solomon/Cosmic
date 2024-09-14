@@ -8177,128 +8177,9 @@ public class Character extends AbstractCharacterObject {
     //ItemFactory saveItems and monsterbook.saveCards are the most time consuming here.
     public synchronized void saveCharToDB(Connection con) throws SQLException {
         Server.getInstance().updateCharacterEntry(this);
+        saveCharacter(con);
 
-        try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, level);    // thanks CanIGetaPR for noticing an unnecessary "level" limitation when persisting DB data
-            ps.setInt(2, fame);
-
-            effLock.lock();
-            statWlock.lock();
-            try {
-                ps.setInt(3, str);
-                ps.setInt(4, dex);
-                ps.setInt(5, luk);
-                ps.setInt(6, int_);
-                ps.setInt(7, Math.abs(exp.get()));
-                ps.setInt(8, Math.abs(gachaexp.get()));
-                ps.setInt(9, hp);
-                ps.setInt(10, mp);
-                ps.setInt(11, maxhp);
-                ps.setInt(12, maxmp);
-
-                StringBuilder sps = new StringBuilder();
-                for (int j : remainingSp) {
-                    sps.append(j);
-                    sps.append(",");
-                }
-                String sp = sps.toString();
-                ps.setString(13, sp.substring(0, sp.length() - 1));
-
-                ps.setInt(14, remainingAp);
-            } finally {
-                statWlock.unlock();
-                effLock.unlock();
-            }
-
-            ps.setInt(15, gmLevel);
-            ps.setInt(16, skinColor.getId());
-            ps.setInt(17, gender);
-            ps.setInt(18, job.getId());
-            ps.setInt(19, hair);
-            ps.setInt(20, face);
-            if (map == null || (cashshop != null && cashshop.isOpened())) {
-                ps.setInt(21, mapid);
-            } else {
-                if (map.getForcedReturnId() != MapId.NONE) {
-                    ps.setInt(21, map.getForcedReturnId());
-                } else {
-                    ps.setInt(21, getHp() < 1 ? map.getReturnMapId() : map.getId());
-                }
-            }
-            ps.setInt(22, meso.get());
-            ps.setInt(23, hpMpApUsed);
-            if (map == null || map.getId() == MapId.CRIMSONWOOD_VALLEY_1 || map.getId() == MapId.CRIMSONWOOD_VALLEY_2) {  // reset to first spawnpoint on those maps
-                ps.setInt(24, 0);
-            } else {
-                Portal closest = map.findClosestPlayerSpawnpoint(getPosition());
-                if (closest != null) {
-                    ps.setInt(24, closest.getId());
-                } else {
-                    ps.setInt(24, 0);
-                }
-            }
-
-            prtLock.lock();
-            try {
-                if (party != null) {
-                    ps.setInt(25, party.getId());
-                } else {
-                    ps.setInt(25, -1);
-                }
-            } finally {
-                prtLock.unlock();
-            }
-
-            ps.setInt(26, buddylist.getCapacity());
-            if (messenger != null) {
-                ps.setInt(27, messenger.getId());
-                ps.setInt(28, messengerposition);
-            } else {
-                ps.setInt(27, 0);
-                ps.setInt(28, 4);
-            }
-            if (maplemount != null) {
-                ps.setInt(29, maplemount.getLevel());
-                ps.setInt(30, maplemount.getExp());
-                ps.setInt(31, maplemount.getTiredness());
-            } else {
-                ps.setInt(29, 1);
-                ps.setInt(30, 0);
-                ps.setInt(31, 0);
-            }
-            for (int i = 1; i < 5; i++) {
-                ps.setInt(i + 31, getSlots(i));
-            }
-
-            monsterbook.saveCards(con, id);
-
-            ps.setInt(36, bookCover);
-            ps.setInt(37, vanquisherStage);
-            ps.setInt(38, dojoPoints);
-            ps.setInt(39, dojoStage);
-            ps.setInt(40, finishedDojoTutorial ? 1 : 0);
-            ps.setInt(41, vanquisherKills);
-            ps.setInt(42, matchcardwins);
-            ps.setInt(43, matchcardlosses);
-            ps.setInt(44, matchcardties);
-            ps.setInt(45, omokwins);
-            ps.setInt(46, omoklosses);
-            ps.setInt(47, omokties);
-            ps.setString(48, dataString);
-            ps.setInt(49, quest_fame);
-            ps.setLong(50, jailExpiration);
-            ps.setInt(51, partnerId);
-            ps.setInt(52, marriageItemid);
-            ps.setTimestamp(53, new Timestamp(lastExpGainTime));
-            ps.setInt(54, ariantPoints);
-            ps.setBoolean(55, canRecvPartySearchInvite);
-            ps.setInt(56, id);
-
-            int updateRows = ps.executeUpdate();
-            if (updateRows < 1) {
-                throw new RuntimeException("Character not in database (" + id + ")");
-            }
-        }
+        monsterbook.saveCards(con, id);
 
         List<Pet> petList = new LinkedList<>();
         petLock.lock();
@@ -8554,6 +8435,193 @@ public class Character extends AbstractCharacterObject {
             storage.saveToDB(con);
             usedStorage = false;
         }
+    }
+
+    private void saveCharacter(Connection con) throws SQLException {
+        SaveStats stats = getSaveStats();
+        try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, stats.level());
+            ps.setInt(2, stats.fame());
+            ps.setInt(3, stats.str());
+            ps.setInt(4, stats.dex());
+            ps.setInt(5, stats.luk());
+            ps.setInt(6, stats.int_());
+            ps.setInt(7, stats.exp());
+            ps.setInt(8, stats.gachaExp());
+            ps.setInt(9, stats.hp());
+            ps.setInt(10, stats.mp());
+            ps.setInt(11, stats.maxHp());
+            ps.setInt(12, stats.maxMp());
+            ps.setString(13, stats.sp());
+            ps.setInt(14, stats.ap());
+            ps.setInt(15, stats.gmLevel());
+            ps.setInt(16, stats.skin());
+            ps.setInt(17, stats.gender());
+            ps.setInt(18, stats.job());
+            ps.setInt(19, stats.hair());
+            ps.setInt(20, stats.face());
+            ps.setInt(21, stats.mapId());
+            ps.setInt(22, stats.meso());
+            ps.setInt(23, stats.hpMpApUsed());
+            ps.setInt(24, stats.spawnPoint());
+            ps.setInt(25, stats.party());
+            ps.setInt(26, stats.buddyCapacity());
+            ps.setInt(27, stats.messenger());
+            ps.setInt(28, stats.messengerPosition());
+            ps.setInt(29, stats.mountLevel());
+            ps.setInt(30, stats.mountExp());
+            ps.setInt(31, stats.mountTiredness());
+            ps.setInt(32, stats.equipSlots());
+            ps.setInt(33, stats.useSlots());
+            ps.setInt(34, stats.setupSlots());
+            ps.setInt(35, stats.etcSlots());
+            ps.setInt(36, stats.monsterBookCover());
+            ps.setInt(37, stats.dojoVanquisherStage());
+            ps.setInt(38, stats.dojoPoints());
+            ps.setInt(39, stats.dojoStage());
+            ps.setInt(40, stats.dojoTutorialComplete() ? 1 : 0);
+            ps.setInt(41, stats.dojoVanquisherKills());
+            ps.setInt(42, stats.matchCardWins());
+            ps.setInt(43, stats.matchCardLosses());
+            ps.setInt(44, stats.matchCardTies());
+            ps.setInt(45, stats.omokWins());
+            ps.setInt(46, stats.omokLosses());
+            ps.setInt(47, stats.omokTies());
+            ps.setString(48, stats.dataString());
+            ps.setInt(49, stats.questFame());
+            ps.setLong(50, stats.jailExpiration());
+            ps.setInt(51, stats.partnerId());
+            ps.setInt(52, stats.marriageItemId());
+            ps.setTimestamp(53, new Timestamp(stats.lastExpGainTime()));
+            ps.setInt(54, stats.ariantPoints());
+            ps.setBoolean(55, stats.canRecvPartySearchInvite());
+            ps.setInt(56, stats.id());
+
+            int updateRows = ps.executeUpdate();
+            if (updateRows < 1) {
+                throw new RuntimeException("Character not in database (" + id + ")");
+            }
+        }
+    }
+
+    private SaveStats getSaveStats() {
+        SaveStats.SaveStatsBuilder builder = SaveStats.builder()
+                .id(id)
+                .level(level)
+                .fame(fame)
+                .gmLevel(gmLevel)
+                .skin(skinColor.getId())
+                .gender(gender)
+                .job(job.getId())
+                .hair(hair)
+                .face(face)
+                .meso(meso.get())
+                .hpMpApUsed(hpMpApUsed)
+                .mapId(getSaveMap())
+                .spawnPoint(getSaveSpawnpoint())
+                .buddyCapacity(buddylist.getCapacity())
+                .monsterBookCover(bookCover)
+                .dojoVanquisherStage(vanquisherStage)
+                .dojoPoints(dojoPoints)
+                .dojoStage(dojoStage)
+                .dojoTutorialComplete(finishedDojoTutorial)
+                .dojoVanquisherKills(vanquisherKills)
+                .matchCardWins(matchcardwins)
+                .matchCardLosses(matchcardlosses)
+                .matchCardTies(matchcardties)
+                .omokWins(omokwins)
+                .omokLosses(omoklosses)
+                .omokTies(omokties)
+                .dataString(dataString)
+                .questFame(quest_fame)
+                .jailExpiration(jailExpiration)
+                .partnerId(partnerId)
+                .marriageItemId(marriageItemid)
+                .lastExpGainTime(lastExpGainTime)
+                .ariantPoints(ariantPoints)
+                .canRecvPartySearchInvite(canRecvPartySearchInvite)
+                .party(getPartyId())
+                .equipSlots(getSlots(InventoryType.EQUIP.getType()))
+                .useSlots(getSlots(InventoryType.USE.getType()))
+                .setupSlots(getSlots(InventoryType.SETUP.getType()))
+                .etcSlots(getSlots(InventoryType.ETC.getType()));
+
+        effLock.lock();
+        statWlock.lock();
+        try {
+            builder.str(str)
+                    .dex(dex)
+                    .int_(int_)
+                    .luk(luk)
+                    .exp(Math.abs(exp.get()))
+                    .gachaExp(Math.abs(gachaexp.get()))
+                    .hp(hp)
+                    .mp(mp)
+                    .maxHp(maxhp)
+                    .maxMp(maxmp)
+                    .ap(remainingAp);
+
+            StringBuilder sps = new StringBuilder();
+            for (int j : remainingSp) {
+                sps.append(j);
+                sps.append(",");
+            }
+            String sp = sps.toString();
+            builder.sp(sp.substring(0, sp.length() - 1));
+        } finally {
+            statWlock.unlock();
+            effLock.unlock();
+        }
+
+
+        if (messenger != null) {
+            builder.messenger(messenger.getId())
+                    .messengerPosition(messengerposition);
+        } else {
+            builder.messenger(0)
+                    .messengerPosition(4);
+        }
+
+        if (maplemount != null) {
+            builder.mountLevel(maplemount.getLevel())
+                    .mountExp(maplemount.getExp())
+                    .mountTiredness(maplemount.getTiredness());
+        } else {
+            builder.mountLevel(1)
+                    .mountExp(0)
+                    .mountTiredness(0);
+        }
+
+        return builder.build();
+    }
+
+    private int getSaveMap() {
+        if (map == null || (cashshop != null && cashshop.isOpened())) {
+            return mapid;
+        }
+
+        if (map.getForcedReturnId() != MapId.NONE) {
+            return map.getForcedReturnId();
+        }
+
+        if (getHp() < 1) {
+            return map.getReturnMapId();
+        }
+
+        return map.getId();
+    }
+
+    private int getSaveSpawnpoint() {
+        if (map == null || map.getId() == MapId.CRIMSONWOOD_VALLEY_1 || map.getId() == MapId.CRIMSONWOOD_VALLEY_2) { // TODO: clean up. Shouldn't hardcode these maps.
+            return 0;
+        }
+
+        Portal closest = map.findClosestPlayerSpawnpoint(getPosition());
+        if (closest == null) {
+            return 0;
+        }
+
+        return closest.getId();
     }
 
     private void saveCooldowns(Connection con) throws SQLException {

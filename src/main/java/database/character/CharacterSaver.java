@@ -25,7 +25,7 @@ public class CharacterSaver {
         log.debug("Saving chr {}", chr.getName());
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
-            con.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+            con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
             try {
                 chr.saveCharToDB(con);
                 con.commit();
