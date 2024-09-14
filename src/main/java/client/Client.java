@@ -129,7 +129,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private Calendar tempBanCalendar;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
-    private int lang = 0;
 
     public enum Type {
         LOGIN,
@@ -523,7 +522,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos, language FROM accounts WHERE name = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos FROM accounts WHERE name = ?")) {
             ps.setString(1, login);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -541,7 +540,6 @@ public class Client extends ChannelInboundHandlerAdapter {
                     pic = rs.getString("pic");
                     gender = rs.getByte("gender");
                     characterSlots = rs.getByte("characterslots");
-                    lang = rs.getInt("language");
                     String passhash = rs.getString("password");
                     byte tos = rs.getByte("tos");
 
@@ -1124,13 +1122,5 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public boolean canBypassPic() {
         return LoginBypassCoordinator.getInstance().canLoginBypass(hwid, accId, true);
-    }
-
-    public int getLanguage() {
-        return lang;
-    }
-
-    public void setLanguage(int lingua) {
-        this.lang = lingua;
     }
 }

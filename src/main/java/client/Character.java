@@ -7074,7 +7074,6 @@ public class Character extends AbstractCharacterObject {
 
                         retClient.setAccountName(rs.getString("name"));
                         retClient.setCharacterSlots(rs.getByte("characterslots"));
-                        retClient.setLanguage(rs.getInt("language"));   // thanks Zein for noticing user language not overriding default once player is in-game
                     }
                 }
             }
@@ -11080,23 +11079,6 @@ public class Character extends AbstractCharacterObject {
 
     public int getAriantPoints() {
         return this.ariantPoints;
-    }
-
-    public void setLanguage(int num) {
-        getClient().setLanguage(num);
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET language = ? WHERE id = ?")) {
-            ps.setInt(1, num);
-            ps.setInt(2, getClient().getAccID());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int getLanguage() {
-        return getClient().getLanguage();
     }
 
     public boolean isChasing() {
