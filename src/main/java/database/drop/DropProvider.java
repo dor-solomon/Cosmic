@@ -10,20 +10,20 @@ import java.util.List;
 import java.util.Optional;
 
 public class DropProvider {
-    private final DropDao dropDao;
+    private final DropRepository dropRepository;
     private final Cache<Integer, List<MonsterDrop>> monsterDropCache = Caffeine.newBuilder().build();
     private final Cache<Integer, List<MonsterGlobalDropEntry>> globalContinentDropCache = Caffeine.newBuilder().build();
     private volatile List<GlobalMonsterDrop> globalMonsterDrops = null;
 
-    public DropProvider(DropDao dropDao) {
-        if (dropDao == null) {
+    public DropProvider(DropRepository dropRepository) {
+        if (dropRepository == null) {
             throw new IllegalArgumentException("DropDao must not be null");
         }
-        this.dropDao = dropDao;
+        this.dropRepository = dropRepository;
     }
 
     private List<MonsterDrop> getMonsterDrops(int monsterId) {
-        return monsterDropCache.get(monsterId, dropDao::getMonsterDrops);
+        return monsterDropCache.get(monsterId, dropRepository::getMonsterDrops);
     }
 
     public List<MonsterDropEntry> getMonsterDropEntries(int monsterId) {
@@ -61,7 +61,7 @@ public class DropProvider {
     }
 
     private void loadGlobalDrops() {
-        this.globalMonsterDrops = dropDao.getGlobalMonsterDrops();
+        this.globalMonsterDrops = dropRepository.getGlobalMonsterDrops();
     }
 
     // TODO: Temporary. MonsterDropEntry should be removed.

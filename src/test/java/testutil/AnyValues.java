@@ -1,6 +1,6 @@
 package testutil;
 
-import database.DaoException;
+import database.DatabaseException;
 
 public class AnyValues {
 
@@ -16,7 +16,7 @@ public class AnyValues {
         return 4;
     }
 
-    public static DaoException daoException() {
-        return new DaoException(string(), new RuntimeException());
+    public static DatabaseException dbException() {
+        return new DatabaseException(string(), new RuntimeException());
     }
 }

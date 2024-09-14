@@ -1,16 +1,16 @@
 package database.drop;
 
-import database.DaoException;
+import database.DatabaseException;
 import database.PgDatabaseConnection;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
 
 import java.util.List;
 
-public class DropDao {
+public class DropRepository {
     private final PgDatabaseConnection connection;
 
-    public DropDao(PgDatabaseConnection connection) {
+    public DropRepository(PgDatabaseConnection connection) {
         this.connection = connection;
     }
 
@@ -24,7 +24,7 @@ public class DropDao {
                     .mapTo(MonsterDrop.class)
                     .list();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get monster drops for id %d".formatted(monsterId), e);
+            throw new DatabaseException("Failed to get monster drops for id %d".formatted(monsterId), e);
         }
     }
 
@@ -36,7 +36,7 @@ public class DropDao {
                     .mapTo(GlobalMonsterDrop.class)
                     .list();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get global monster drops", e);
+            throw new DatabaseException("Failed to get global monster drops", e);
         }
     }
 }

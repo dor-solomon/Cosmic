@@ -1,6 +1,6 @@
 package database.monsterbook;
 
-import database.DaoException;
+import database.DatabaseException;
 import database.PgDatabaseConnection;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
@@ -8,10 +8,10 @@ import org.jdbi.v3.core.statement.PreparedBatch;
 
 import java.util.List;
 
-public class MonsterCardDao {
+public class MonsterCardRepository {
     private final PgDatabaseConnection connection;
 
-    public MonsterCardDao(PgDatabaseConnection connection) {
+    public MonsterCardRepository(PgDatabaseConnection connection) {
         this.connection = connection;
     }
 
@@ -25,7 +25,7 @@ public class MonsterCardDao {
                     .mapTo(MonsterCard.class)
                     .list();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to find monster cards (chrId %d)".formatted(chrId), e);
+            throw new DatabaseException("Failed to find monster cards (chrId %d)".formatted(chrId), e);
         }
     }
 
@@ -44,7 +44,7 @@ public class MonsterCardDao {
             });
             batch.execute();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to save monster cards (chrId %d)".formatted(chrId), e);
+            throw new DatabaseException("Failed to save monster cards (chrId %d)".formatted(chrId), e);
         }
     }
 }

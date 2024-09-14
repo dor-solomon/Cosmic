@@ -1,7 +1,7 @@
 package database.character;
 
 import client.Character;
-import database.monsterbook.MonsterCardDao;
+import database.monsterbook.MonsterCardRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.DatabaseConnection;
@@ -11,10 +11,10 @@ import java.sql.SQLException;
 
 public class CharacterSaver {
     private static final Logger log = LoggerFactory.getLogger(CharacterSaver.class);
-    private final MonsterCardDao monsterCardDao;
+    private final MonsterCardRepository monsterCardRepository;
 
-    public CharacterSaver(MonsterCardDao monsterCardDao) {
-        this.monsterCardDao = monsterCardDao;
+    public CharacterSaver(MonsterCardRepository monsterCardRepository) {
+        this.monsterCardRepository = monsterCardRepository;
     }
 
     public void save(Character chr) {
@@ -42,7 +42,7 @@ public class CharacterSaver {
         }
 
         // Saving monster cards to both MySQL and Postgres for now
-        monsterCardDao.save(chr.getId(), chr.getMonsterBook().getCards());
+        monsterCardRepository.save(chr.getId(), chr.getMonsterBook().getCards());
     }
 
 }

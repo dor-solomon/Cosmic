@@ -3,7 +3,7 @@ package database.character;
 import client.Character;
 import client.Client;
 import client.MonsterBook;
-import database.monsterbook.MonsterCardDao;
+import database.monsterbook.MonsterCardRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,10 +12,10 @@ import java.util.Optional;
 
 public class CharacterLoader {
     private static final Logger log = LoggerFactory.getLogger(CharacterLoader.class);
-    private final MonsterCardDao monsterCardDao;
+    private final MonsterCardRepository monsterCardRepository;
 
-    public CharacterLoader(MonsterCardDao monsterCardDao) {
-        this.monsterCardDao = monsterCardDao;
+    public CharacterLoader(MonsterCardRepository monsterCardRepository) {
+        this.monsterCardRepository = monsterCardRepository;
     }
 
     public Optional<Character> loadForChannel(int chrId, Client client) {
@@ -33,7 +33,7 @@ public class CharacterLoader {
     }
 
     private MonsterBook loadMonsterBook(int chrId) {
-        var monsterCards = monsterCardDao.load(chrId);
+        var monsterCards = monsterCardRepository.load(chrId);
         return new MonsterBook(monsterCards);
     }
 }

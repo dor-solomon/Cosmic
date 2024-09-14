@@ -21,19 +21,19 @@ import static org.mockito.Mockito.when;
 class DropProviderTest {
 
     @Mock
-    private DropDao dropDao;
+    private DropRepository dropRepository;
 
     private DropProvider dropProvider;
 
     @BeforeEach
     void reset() {
         MockitoAnnotations.openMocks(this);
-        this.dropProvider = new DropProvider(dropDao);
+        this.dropProvider = new DropProvider(dropRepository);
     }
 
     @Test
     void getMonsterDropEntries_noDrops() {
-        when(dropDao.getMonsterDrops(anyInt())).thenReturn(Collections.emptyList());
+        when(dropRepository.getMonsterDrops(anyInt())).thenReturn(Collections.emptyList());
 
         List<MonsterDropEntry> dropEntries = dropProvider.getMonsterDropEntries(489340);
 
@@ -43,7 +43,7 @@ class DropProviderTest {
     @Test
     void getMonsterDropEntries() {
         MonsterDrop snailShellDrop = snailShellDrop();
-        when(dropDao.getMonsterDrops(anyInt())).thenReturn(List.of(snailShellDrop));
+        when(dropRepository.getMonsterDrops(anyInt())).thenReturn(List.of(snailShellDrop));
 
         List<MonsterDropEntry> dropEntries = dropProvider.getMonsterDropEntries(100100);
 
@@ -58,7 +58,7 @@ class DropProviderTest {
 
     @Test
     void getCachedMonsterDropEntries() {
-        when(dropDao.getMonsterDrops(anyInt())).thenReturn(List.of(snailShellDrop()));
+        when(dropRepository.getMonsterDrops(anyInt())).thenReturn(List.of(snailShellDrop()));
         int monsterId = 100100;
 
         List<MonsterDropEntry> dropEntries1 = dropProvider.getMonsterDropEntries(monsterId);
@@ -73,7 +73,7 @@ class DropProviderTest {
         assertEquals(dropEntry1.Maximum, dropEntry2.Maximum);
         assertEquals(dropEntry1.questid, dropEntry2.questid);
         assertEquals(dropEntry1.chance, dropEntry2.chance);
-        verify(dropDao, times(1)).getMonsterDrops(anyInt());
+        verify(dropRepository, times(1)).getMonsterDrops(anyInt());
     }
 
     private MonsterDrop snailShellDrop() {
@@ -83,7 +83,7 @@ class DropProviderTest {
     @Test
     void getCachedGlobalDropEntries() {
         GlobalMonsterDrop globalDrop = new GlobalMonsterDrop(2049100, -1, 2, 3, null, 450);
-        when(dropDao.getGlobalMonsterDrops()).thenReturn(List.of(globalDrop));
+        when(dropRepository.getGlobalMonsterDrops()).thenReturn(List.of(globalDrop));
 
         List<MonsterGlobalDropEntry> dropEntries1 = dropProvider.getRelevantGlobalDrops(AnyValues.integer());
         List<MonsterGlobalDropEntry> dropEntries2 = dropProvider.getRelevantGlobalDrops(AnyValues.integer());
@@ -104,13 +104,13 @@ class DropProviderTest {
         assertEquals(dropEntry1.questid, dropEntry2.questid);
         assertEquals(450, dropEntry1.chance);
         assertEquals(dropEntry1.chance, dropEntry2.chance);
-        verify(dropDao, times(1)).getGlobalMonsterDrops();
+        verify(dropRepository, times(1)).getGlobalMonsterDrops();
     }
 
     @Test
     void getRelevantGlobalDrop() {
         GlobalMonsterDrop ossyriaDrop = new GlobalMonsterDrop(AnyValues.integer(), 2, AnyValues.integer(), AnyValues.integer(), AnyValues.integer(), AnyValues.integer());
-        when(dropDao.getGlobalMonsterDrops()).thenReturn(List.of(ossyriaDrop));
+        when(dropRepository.getGlobalMonsterDrops()).thenReturn(List.of(ossyriaDrop));
         int ossyriaMapId = 200_000_200;
 
         List<MonsterGlobalDropEntry> dropEntries = dropProvider.getRelevantGlobalDrops(ossyriaMapId);
@@ -121,7 +121,7 @@ class DropProviderTest {
     @Test
     void getRelevantGlobalDrop_wrongContinent() {
         GlobalMonsterDrop ellinDrop = new GlobalMonsterDrop(AnyValues.integer(), 3, AnyValues.integer(), AnyValues.integer(), AnyValues.integer(), AnyValues.integer());
-        when(dropDao.getGlobalMonsterDrops()).thenReturn(List.of(ellinDrop));
+        when(dropRepository.getGlobalMonsterDrops()).thenReturn(List.of(ellinDrop));
         int victoriaMapId = 102_000_000;
 
         List<MonsterGlobalDropEntry> dropEntries = dropProvider.getRelevantGlobalDrops(victoriaMapId);
@@ -132,28 +132,28 @@ class DropProviderTest {
     @Test
     void clearCaches_shouldClearMonsterDrops() {
         MonsterDrop drop = snailShellDrop();
-        when(dropDao.getMonsterDrops(anyInt())).thenReturn(List.of(drop));
+        when(dropRepository.getMonsterDrops(anyInt())).thenReturn(List.of(drop));
         int monsterId = 100100;
 
         List<MonsterDropEntry> drops1 = dropProvider.getMonsterDropEntries(monsterId);
         dropProvider.clearCaches();
         List<MonsterDropEntry> drops2 = dropProvider.getMonsterDropEntries(monsterId);
 
-        verify(dropDao, times(2)).getMonsterDrops(anyInt());
+        verify(dropRepository, times(2)).getMonsterDrops(anyInt());
         assertEquals(1, drops1.size());
         assertEquals(1, drops2.size());
     }
 
     @Test
     void clearCaches_shouldClearGlobalDrops() {
-        when(dropDao.getGlobalMonsterDrops()).thenReturn(List.of(globalDrop()));
+        when(dropRepository.getGlobalMonsterDrops()).thenReturn(List.of(globalDrop()));
         int mapId = 100_000_123;
 
         List<MonsterGlobalDropEntry> drops1 = dropProvider.getRelevantGlobalDrops(mapId);
         dropProvider.clearCaches();
         List<MonsterGlobalDropEntry> drops2 = dropProvider.getRelevantGlobalDrops(mapId);
 
-        verify(dropDao, times(2)).getGlobalMonsterDrops();
+        verify(dropRepository, times(2)).getGlobalMonsterDrops();
         assertEquals(1, drops1.size());
         assertEquals(1, drops2.size());
     }

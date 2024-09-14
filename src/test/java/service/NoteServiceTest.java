@@ -25,7 +25,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static testutil.AnyValues.daoException;
+import static testutil.AnyValues.dbException;
 
 class NoteServiceTest {
 
@@ -78,7 +78,7 @@ class NoteServiceTest {
 
     @Test
     void sendFailure() {
-        doThrow(daoException()).when(noteDao).save(any());
+        doThrow(dbException()).when(noteDao).save(any());
 
         boolean success = noteService.sendNormal(AnyValues.string(), AnyValues.string(), AnyValues.string());
 
@@ -119,7 +119,7 @@ class NoteServiceTest {
     @Test
     void showNotesFailure_shouldNotSendPacket() {
         var chr = Mocks.chr("mockChr");
-        when(noteDao.findAllByTo(any())).thenThrow(daoException());
+        when(noteDao.findAllByTo(any())).thenThrow(dbException());
 
         noteService.show(chr);
 
@@ -140,7 +140,7 @@ class NoteServiceTest {
 
     @Test
     void deleteNoteFailure() {
-        when(noteDao.delete(anyInt())).thenThrow(daoException());
+        when(noteDao.delete(anyInt())).thenThrow(dbException());
 
         Optional<Note> deletedNote = noteService.delete(4382);
 

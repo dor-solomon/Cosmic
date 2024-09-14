@@ -1,6 +1,6 @@
 package database.shop;
 
-import database.DaoException;
+import database.DatabaseException;
 import database.PgDatabaseConnection;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
@@ -25,7 +25,7 @@ public class ShopDao {
                     .mapTo(Shop.class)
                     .findOne();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get shop with id %d".formatted(shopId), e);
+            throw new DatabaseException("Failed to get shop with id %d".formatted(shopId), e);
         }
     }
 
@@ -40,7 +40,7 @@ public class ShopDao {
                     .mapTo(ShopItem.class)
                     .list();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get shop items for shop %d".formatted(shopId), e);
+            throw new DatabaseException("Failed to get shop items for shop %d".formatted(shopId), e);
         }
     }
 }

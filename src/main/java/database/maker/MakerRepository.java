@@ -1,6 +1,6 @@
 package database.maker;
 
-import database.DaoException;
+import database.DatabaseException;
 import database.PgDatabaseConnection;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
@@ -8,10 +8,10 @@ import org.jdbi.v3.core.JdbiException;
 import java.util.List;
 import java.util.Optional;
 
-public class MakerDao {
+public class MakerRepository {
     private final PgDatabaseConnection connection;
 
-    public MakerDao(PgDatabaseConnection connection) {
+    public MakerRepository(PgDatabaseConnection connection) {
         this.connection = connection;
     }
 
@@ -25,7 +25,7 @@ public class MakerDao {
                     .mapTo(MakerReagent.class)
                     .findOne();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get maker reagent with item id: %d".formatted(itemId), e);
+            throw new DatabaseException("Failed to get maker reagent with item id: %d".formatted(itemId), e);
         }
     }
 
@@ -39,7 +39,7 @@ public class MakerDao {
                     .mapTo(MakerRecipe.class)
                     .findOne();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get maker recipe with item id: %d".formatted(itemId), e);
+            throw new DatabaseException("Failed to get maker recipe with item id: %d".formatted(itemId), e);
         }
     }
 
@@ -53,7 +53,7 @@ public class MakerDao {
                     .mapTo(MakerIngredient.class)
                     .list();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to get maker ingredients for recipe item id %d".formatted(recipeItemId), e);
+            throw new DatabaseException("Failed to get maker ingredients for recipe item id %d".formatted(recipeItemId), e);
         }
     }
 }

@@ -22,14 +22,14 @@ import static org.mockito.Mockito.when;
 class MakerInfoProviderTest {
 
     @Mock
-    private MakerDao makerDao;
+    private MakerRepository makerRepository;
 
     private MakerInfoProvider makerInfoProvider;
 
     @BeforeEach
     void reset() {
         MockitoAnnotations.openMocks(this);
-        this.makerInfoProvider = new MakerInfoProvider(makerDao);
+        this.makerInfoProvider = new MakerInfoProvider(makerRepository);
     }
 
     @Test
@@ -41,7 +41,7 @@ class MakerInfoProviderTest {
     void getReagentFromDb() {
         int itemId = 5783;
         MakerReagent reagent = createReagent(itemId);
-        when(makerDao.getReagent(anyInt())).thenReturn(Optional.of(reagent));
+        when(makerRepository.getReagent(anyInt())).thenReturn(Optional.of(reagent));
 
         Optional<MakerReagent> retrievedReagent = makerInfoProvider.getMakerReagent(itemId);
 
@@ -53,7 +53,7 @@ class MakerInfoProviderTest {
     void getCachedReagent() {
         int itemId = 90123444;
         MakerReagent reagent = createReagent(itemId);
-        when(makerDao.getReagent(anyInt())).thenReturn(Optional.of(reagent));
+        when(makerRepository.getReagent(anyInt())).thenReturn(Optional.of(reagent));
 
         Optional<MakerReagent> firstReagent = makerInfoProvider.getMakerReagent(itemId);
         Optional<MakerReagent> secondReagent = makerInfoProvider.getMakerReagent(itemId);
@@ -62,7 +62,7 @@ class MakerInfoProviderTest {
         assertEquals(reagent, firstReagent.get());
         assertTrue(secondReagent.isPresent());
         assertEquals(reagent, secondReagent.get());
-        verify(makerDao, times(1)).getReagent(itemId);
+        verify(makerRepository, times(1)).getReagent(itemId);
     }
 
     private MakerReagent createReagent(int itemId) {
@@ -73,7 +73,7 @@ class MakerInfoProviderTest {
     void getRecipeFromDb() {
         int itemId = 43893;
         MakerRecipe recipe = createRecipe(itemId);
-        when(makerDao.getRecipe(itemId)).thenReturn(Optional.of(recipe));
+        when(makerRepository.getRecipe(itemId)).thenReturn(Optional.of(recipe));
 
         Optional<MakerRecipe> retrievedRecipe = makerInfoProvider.getMakerRecipe(itemId);
 
@@ -94,7 +94,7 @@ class MakerInfoProviderTest {
     void getCachedRecipe() {
         int itemId = 10848;
         MakerRecipe recipe = createRecipe(itemId);
-        when(makerDao.getRecipe(anyInt())).thenReturn(Optional.of(recipe));
+        when(makerRepository.getRecipe(anyInt())).thenReturn(Optional.of(recipe));
 
         Optional<MakerRecipe> firstRecipe = makerInfoProvider.getMakerRecipe(itemId);
         Optional<MakerRecipe> secondRecipe = makerInfoProvider.getMakerRecipe(itemId);
@@ -103,7 +103,7 @@ class MakerInfoProviderTest {
         assertEquals(recipe, firstRecipe.get());
         assertTrue(secondRecipe.isPresent());
         assertEquals(recipe, secondRecipe.get());
-        verify(makerDao, times(1)).getRecipe(itemId);
+        verify(makerRepository, times(1)).getRecipe(itemId);
     }
 
     private MakerRecipe createRecipe(int itemId) {
@@ -114,7 +114,7 @@ class MakerInfoProviderTest {
     void getStimulant() {
         int catalyst = 4031200;
         MakerRecipe recipeWithCatalyst = new MakerRecipe(0, (short) 0, (short) 0, (short) 0, 0, null, null, catalyst, (short) 0, (short) 0);
-        when(makerDao.getRecipe(anyInt())).thenReturn(Optional.of(recipeWithCatalyst));
+        when(makerRepository.getRecipe(anyInt())).thenReturn(Optional.of(recipeWithCatalyst));
 
         Optional<Integer> stimulant = makerInfoProvider.getStimulant(AnyValues.integer());
 
@@ -144,9 +144,9 @@ class MakerInfoProviderTest {
     void getMakerItemCreateEntry() {
         final int itemId = 458945;
         MakerRecipe recipe = createRecipe(itemId);
-        when(makerDao.getRecipe(anyInt())).thenReturn(Optional.of(recipe));
+        when(makerRepository.getRecipe(anyInt())).thenReturn(Optional.of(recipe));
         MakerIngredient ingredient = new MakerIngredient(1002003, (short) 5);
-        when(makerDao.getIngredients(anyInt())).thenReturn(List.of(ingredient));
+        when(makerRepository.getIngredients(anyInt())).thenReturn(List.of(ingredient));
 
         Optional<MakerItemFactory.MakerItemCreateEntry> optionalCreateEntry = makerInfoProvider.getMakerItemEntry(itemId);
 
@@ -166,6 +166,6 @@ class MakerInfoProviderTest {
     }
 
     private void givenNoRecipe() {
-        when(makerDao.getRecipe(anyInt())).thenReturn(Optional.empty());
+        when(makerRepository.getRecipe(anyInt())).thenReturn(Optional.empty());
     }
 }

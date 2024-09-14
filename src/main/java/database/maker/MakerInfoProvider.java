@@ -11,24 +11,24 @@ import java.util.Optional;
 
 @ThreadSafe
 public class MakerInfoProvider {
-    private final MakerDao makerDao;
+    private final MakerRepository makerRepository;
     private final Cache<Integer, Optional<MakerReagent>> reagentCache = Caffeine.newBuilder().build();
     private final Cache<Integer, Optional<MakerRecipe>> recipeCache = Caffeine.newBuilder().build();
     private final Cache<Integer, List<MakerIngredient>> ingredientsCache = Caffeine.newBuilder().build();
 
-    public MakerInfoProvider(MakerDao makerDao) {
-        if (makerDao == null) {
+    public MakerInfoProvider(MakerRepository makerRepository) {
+        if (makerRepository == null) {
             throw new IllegalArgumentException("MakerDao must not be null");
         }
-        this.makerDao = makerDao;
+        this.makerRepository = makerRepository;
     }
 
     public Optional<MakerReagent> getMakerReagent(int itemId) {
-        return reagentCache.get(itemId, makerDao::getReagent);
+        return reagentCache.get(itemId, makerRepository::getReagent);
     }
 
     public Optional<MakerRecipe> getMakerRecipe(int itemId) {
-        return recipeCache.get(itemId, makerDao::getRecipe);
+        return recipeCache.get(itemId, makerRepository::getRecipe);
     }
 
     public Optional<Integer> getStimulant(int itemId) {
@@ -36,7 +36,7 @@ public class MakerInfoProvider {
     }
 
     public List<MakerIngredient> getIngredients(int recipeItemId) {
-        return ingredientsCache.get(recipeItemId, makerDao::getIngredients);
+        return ingredientsCache.get(recipeItemId, makerRepository::getIngredients);
     }
 
     public Optional<MakerDisassemblyInfo> getDisassemblyInfo(int itemId) {

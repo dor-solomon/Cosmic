@@ -45,12 +45,12 @@ import database.PgDatabaseConfig;
 import database.PgDatabaseConnection;
 import database.character.CharacterLoader;
 import database.character.CharacterSaver;
-import database.drop.DropDao;
 import database.drop.DropProvider;
-import database.maker.MakerDao;
+import database.drop.DropRepository;
 import database.maker.MakerInfoProvider;
+import database.maker.MakerRepository;
 import database.migration.FlywayRunner;
-import database.monsterbook.MonsterCardDao;
+import database.monsterbook.MonsterCardRepository;
 import database.note.NoteDao;
 import database.shop.ShopDao;
 import net.ChannelDependencies;
@@ -1002,15 +1002,15 @@ public class Server {
     }
 
     private ChannelDependencies registerChannelDependencies(PgDatabaseConnection connection) {
-        MonsterCardDao monsterCardDao = new MonsterCardDao(connection);
-        CharacterLoader characterLoader = new CharacterLoader(monsterCardDao);
-        CharacterSaver characterSaver = new CharacterSaver(monsterCardDao);
+        MonsterCardRepository monsterCardRepository = new MonsterCardRepository(connection);
+        CharacterLoader characterLoader = new CharacterLoader(monsterCardRepository);
+        CharacterSaver characterSaver = new CharacterSaver(monsterCardRepository);
         TransitionService transitionService = new TransitionService(characterSaver);
         BanService banService = new BanService(transitionService);
         NoteService noteService = new NoteService(new NoteDao(connection));
-        MakerProcessor makerProcessor = new MakerProcessor(new MakerInfoProvider(new MakerDao(connection)));
+        MakerProcessor makerProcessor = new MakerProcessor(new MakerInfoProvider(new MakerRepository(connection)));
         FredrickProcessor fredrickProcessor = new FredrickProcessor(noteService);
-        DropProvider dropProvider = new DropProvider(new DropDao(connection));
+        DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
         CommandContext commandContext = new CommandContext(null, dropProvider, shopFactory,
                 characterSaver, transitionService);

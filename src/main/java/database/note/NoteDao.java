@@ -1,6 +1,6 @@
 package database.note;
 
-import database.DaoException;
+import database.DatabaseException;
 import database.PgDatabaseConnection;
 import model.Note;
 import org.jdbi.v3.core.Handle;
@@ -29,7 +29,7 @@ public class NoteDao {
                     .bind(5, 0)
                     .execute();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to save note: %s".formatted(note.toString()), e);
+            throw new DatabaseException("Failed to save note: %s".formatted(note.toString()), e);
         }
     }
 
@@ -46,7 +46,7 @@ public class NoteDao {
                     .mapTo(Note.class)
                     .list();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to find notes sent to: %s".formatted(receiver), e);
+            throw new DatabaseException("Failed to find notes sent to: %s".formatted(receiver), e);
         }
     }
 
@@ -60,7 +60,7 @@ public class NoteDao {
 
             return note;
         } catch (JdbiException e) {
-            throw new DaoException("Failed to delete note with id: %d".formatted(id), e);
+            throw new DatabaseException("Failed to delete note with id: %d".formatted(id), e);
         }
     }
 
@@ -76,7 +76,7 @@ public class NoteDao {
                     .mapTo(Note.class)
                     .findOne();
         } catch (JdbiException e) {
-            throw new DaoException("Failed find note with id %s".formatted(id), e);
+            throw new DatabaseException("Failed find note with id %s".formatted(id), e);
         }
         return note;
     }
@@ -90,7 +90,7 @@ public class NoteDao {
                     .bind(0, id)
                     .execute();
         } catch (JdbiException e) {
-            throw new DaoException("Failed to delete note with id %d".formatted(id), e);
+            throw new DatabaseException("Failed to delete note with id %d".formatted(id), e);
         }
     }
 }
