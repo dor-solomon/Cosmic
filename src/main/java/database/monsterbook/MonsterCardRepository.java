@@ -29,8 +29,8 @@ public class MonsterCardRepository {
         }
     }
 
-    public void save(int chrId, List<MonsterCard> cards) {
-        try (Handle handle = connection.getHandle()) {
+    public void save(Handle handle, int chrId, List<MonsterCard> cards) {
+        try {
             PreparedBatch batch = handle.prepareBatch("""
                     INSERT INTO monster_card (chr_id, card_id, level)
                     VALUES (?, ?, ?)

@@ -1004,7 +1004,7 @@ public class Server {
     private ChannelDependencies registerChannelDependencies(PgDatabaseConnection connection) {
         MonsterCardRepository monsterCardRepository = new MonsterCardRepository(connection);
         CharacterLoader characterLoader = new CharacterLoader(monsterCardRepository);
-        CharacterSaver characterSaver = new CharacterSaver(monsterCardRepository);
+        CharacterSaver characterSaver = new CharacterSaver(connection, monsterCardRepository);
         TransitionService transitionService = new TransitionService(characterSaver);
         BanService banService = new BanService(transitionService);
         NoteService noteService = new NoteService(new NoteDao(connection));

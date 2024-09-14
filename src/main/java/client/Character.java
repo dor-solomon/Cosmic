@@ -8438,7 +8438,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void saveCharacter(Connection con) throws SQLException {
-        SaveStats stats = getSaveStats();
+        CharacterStats stats = getCharacterStats();
         try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, stats.level());
             ps.setInt(2, stats.fame());
@@ -8504,8 +8504,8 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    private SaveStats getSaveStats() {
-        SaveStats.SaveStatsBuilder builder = SaveStats.builder()
+    public CharacterStats getCharacterStats() {
+        CharacterStats.CharacterStatsBuilder builder = CharacterStats.builder()
                 .id(id)
                 .level(level)
                 .fame(fame)

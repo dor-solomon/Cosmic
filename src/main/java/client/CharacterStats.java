@@ -3,7 +3,7 @@ package client;
 import lombok.Builder;
 
 @Builder
-public record SaveStats(
+public record CharacterStats(
         int id,
         int level,
         int fame,
