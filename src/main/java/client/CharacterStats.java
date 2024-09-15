@@ -4,6 +4,9 @@ import lombok.Builder;
 
 @Builder
 public record CharacterStats(
+        int account,
+        int world,
+        String name,
         int id,
         int level,
         int fame,

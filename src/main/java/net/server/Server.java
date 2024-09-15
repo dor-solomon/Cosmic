@@ -108,6 +108,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
@@ -969,13 +970,9 @@ public class Server {
 
     private PgDatabaseConfig readPgDbConfig() {
         final ServerConfig serverConfig = YamlConfig.config.server;
-        String pgDbHost = System.getenv("PG_DB_HOST");
-        if (pgDbHost == null) {
-            pgDbHost = serverConfig.PG_DB_HOST;
-        }
+        String url = Objects.requireNonNullElse(System.getenv("PG_DB_URL"), serverConfig.PG_DB_URL);
         return PgDatabaseConfig.builder()
-                .databaseName(serverConfig.PG_DB_NAME)
-                .host(pgDbHost)
+                .url(url)
                 .schema(serverConfig.PG_DB_SCHEMA)
                 .adminUsername(serverConfig.PG_DB_ADMIN_USERNAME)
                 .adminPassword(serverConfig.PG_DB_ADMIN_PASSWORD)
@@ -999,8 +996,7 @@ public class Server {
 
     private HikariConfig createHikariConfig(PgDatabaseConfig config) {
         final HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(config.getJdbcUrl());
-        hikariConfig.setSchema(config.schema());
+        hikariConfig.setJdbcUrl(config.url());
         hikariConfig.setUsername(config.username());
         hikariConfig.setPassword(config.password());
         hikariConfig.setInitializationFailTimeout(config.poolInitTimeout().toMillis());

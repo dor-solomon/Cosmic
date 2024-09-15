@@ -13,8 +13,7 @@ public class ServerConfig {
     public int INIT_CONNECTION_POOL_TIMEOUT;
 
     // PostgreSQL database configuration
-    public String PG_DB_NAME;
-    public String PG_DB_HOST;
+    public String PG_DB_URL;
     public String PG_DB_SCHEMA;
     public String PG_DB_ADMIN_USERNAME;
     public String PG_DB_ADMIN_PASSWORD;

@@ -15,7 +15,7 @@ public class FlywayRunner {
 
     public void migrate() throws FlywayException {
         Flyway flyway = Flyway.configure()
-                .dataSource(dbConfig.getJdbcUrl(), dbConfig.adminUsername(), dbConfig.adminPassword())
+                .dataSource(dbConfig.url(), dbConfig.adminUsername(), dbConfig.adminPassword())
                 .schemas(dbConfig.schema())
                 .createSchemas(true)
                 .connectRetries(10)

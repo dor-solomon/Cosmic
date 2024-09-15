@@ -29,7 +29,7 @@ CREATE TABLE chr
     used_hp_mp_ap          integer                 NOT NULL,
     gm_level               smallint                NOT NULL,
     party_id               integer,
-    buddy_capacity         smallint,
+    buddy_capacity         smallint                NOT NULL,
     "rank"                 integer,
     rank_move              integer,
     job_rank               integer,

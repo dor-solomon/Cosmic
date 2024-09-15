@@ -165,8 +165,7 @@ server:
     DB_PASS: ""
     INIT_CONNECTION_POOL_TIMEOUT: 90    # Seconds
 
-    PG_DB_NAME: "cosmic"
-    PG_DB_HOST: "localhost"
+    PG_DB_URL: "jdbc:postgresql://localhost:5432/cosmic"
     PG_DB_SCHEMA: "cosmic"
     PG_DB_ADMIN_USERNAME: "cosmic_admin"
     PG_DB_ADMIN_PASSWORD: "redsnailshell"

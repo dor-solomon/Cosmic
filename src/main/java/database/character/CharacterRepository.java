@@ -7,6 +7,54 @@ import java.sql.Timestamp;
 
 public class CharacterRepository {
 
+    public int insert(Handle handle, CharacterStats stats) {
+        String sql = """
+                INSERT INTO chr (account, world, name, level, exp, str, dex, "int", luk, hp, mp, max_hp, max_mp, ap, sp,
+                    job, fame, gender, skin, hair, face, meso, map_id, spawn_portal, gacha_exp, used_hp_mp_ap, gm_level,
+                    party_id, buddy_capacity, equip_slots, use_slots, setup_slots, etc_slots)
+                VALUES (:account, :world, :name, :level, :exp, :str, :dex, :int, :luk, :hp, :mp, :max_hp, :max_mp, :ap,
+                    :sp, :job, :fame, :gender, :skin, :hair, :face, :meso, :map_id, :spawn_portal, :gacha_exp,
+                    :used_hp_mp_ap, :gm_level, :party_id, :buddy_capacity, :equip_slots, :use_slots, :setup_slots,
+                    :etc_slots)""";
+        return handle.createUpdate(sql)
+                .bind("account", stats.account())
+                .bind("world", stats.world())
+                .bind("name", stats.name())
+                .bind("level", stats.level())
+                .bind("exp", stats.exp())
+                .bind("str", stats.str())
+                .bind("dex", stats.dex())
+                .bind("int", stats.int_())
+                .bind("luk", stats.luk())
+                .bind("hp", stats.hp())
+                .bind("mp", stats.mp())
+                .bind("max_hp", stats.maxHp())
+                .bind("max_mp", stats.maxMp())
+                .bind("ap", stats.ap())
+                .bind("sp", parseSp(stats.sp()))
+                .bind("job", stats.job())
+                .bind("fame", stats.fame())
+                .bind("gender", stats.gender())
+                .bind("skin", stats.skin())
+                .bind("hair", stats.hair())
+                .bind("face", stats.face())
+                .bind("meso", stats.meso())
+                .bind("map_id", stats.mapId())
+                .bind("spawn_portal", stats.spawnPortal())
+                .bind("gacha_exp", stats.gachaExp())
+                .bind("used_hp_mp_ap", stats.hpMpApUsed())
+                .bind("gm_level", stats.gmLevel())
+                .bind("party_id", stats.party())
+                .bind("buddy_capacity", stats.buddyCapacity())
+                .bind("equip_slots", stats.equipSlots())
+                .bind("use_slots", stats.useSlots())
+                .bind("setup_slots", stats.setupSlots())
+                .bind("etc_slots", stats.etcSlots())
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo(Integer.class)
+                .one();
+    }
+
     public boolean update(Handle handle, CharacterStats stats) {
         String sql = """
                 UPDATE chr
@@ -40,7 +88,7 @@ public class CharacterRepository {
                 .bind("max_hp", stats.maxHp())
                 .bind("max_mp", stats.maxMp())
                 .bind("ap", stats.ap())
-                .bind("sp", parseMultiSkillbookSp(stats.sp()))
+                .bind("sp", parseSp(stats.sp()))
                 .bind("job", stats.job())
                 .bind("fame", stats.fame())
                 .bind("gender", stats.gender())
@@ -89,11 +137,16 @@ public class CharacterRepository {
         return updatedRows > 0;
     }
 
-    private int parseMultiSkillbookSp(String sp) {
+    private int parseSp(String sp) {
         if (sp == null) {
             return 0;
         }
 
+        if (!sp.contains(",")) {
+            return Integer.parseInt(sp);
+        }
+
+        // Old multi skillbook sp to support Evan skills. To be changed - sp will be simple integer in new db.
         return Integer.parseInt(sp.split(",")[0]);
     }
 }
