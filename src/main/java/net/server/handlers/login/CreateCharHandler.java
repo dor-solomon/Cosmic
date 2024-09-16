@@ -22,6 +22,7 @@
 package net.server.handlers.login;
 
 import client.Client;
+import client.creator.JobType;
 import client.creator.novice.BeginnerCreator;
 import client.creator.novice.LegendCreator;
 import client.creator.novice.NoblesseCreator;
@@ -47,6 +48,21 @@ public final class CreateCharHandler extends AbstractPacketHandler {
         int weapon = p.readInt();
         int gender = p.readByte();
 
+        /*
+        NewCharacterSpec spec = NewCharacterSpec.builder()
+                .type(parseJobType(p.readInt()))
+                .face(p.readInt())
+                .hair(p.readInt())
+                .hairColor(p.readInt())
+                .skin(p.readInt())
+                .topItemId(p.readInt())
+                .bottomItemId(p.readInt())
+                .shoesItemId(p.readInt())
+                .weaponItemId(p.readInt())
+                .gender(p.readByte())
+                .build();
+         */
+
         int status;
         switch (job) {
         case 0: // Knights of Cygnus
@@ -66,5 +82,14 @@ public final class CreateCharHandler extends AbstractPacketHandler {
         if (status == -2) {
             c.sendPacket(PacketCreator.deleteCharResponse(0, 9));
         }
+    }
+
+    private static JobType parseJobType(int value) {
+        return switch (value) {
+            case 0 -> JobType.KNIGHT_OF_CYGNUS;
+            case 1 -> JobType.ADVENTURER;
+            case 2 -> JobType.ARAN;
+            default -> throw new IllegalArgumentException("Invalid job type: " + value);
+        };
     }
 }
