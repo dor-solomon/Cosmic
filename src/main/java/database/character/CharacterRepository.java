@@ -31,7 +31,7 @@ public class CharacterRepository {
                 .bind("max_hp", stats.maxHp())
                 .bind("max_mp", stats.maxMp())
                 .bind("ap", stats.ap())
-                .bind("sp", parseSp(stats.sp()))
+                .bind("sp", stats.sp())
                 .bind("job", stats.job())
                 .bind("fame", stats.fame())
                 .bind("gender", stats.gender())
@@ -88,7 +88,7 @@ public class CharacterRepository {
                 .bind("max_hp", stats.maxHp())
                 .bind("max_mp", stats.maxMp())
                 .bind("ap", stats.ap())
-                .bind("sp", parseSp(stats.sp()))
+                .bind("sp", stats.sp())
                 .bind("job", stats.job())
                 .bind("fame", stats.fame())
                 .bind("gender", stats.gender())
@@ -135,18 +135,5 @@ public class CharacterRepository {
                 .execute();
 
         return updatedRows > 0;
-    }
-
-    private int parseSp(String sp) {
-        if (sp == null) {
-            return 0;
-        }
-
-        if (!sp.contains(",")) {
-            return Integer.parseInt(sp);
-        }
-
-        // Old multi skillbook sp to support Evan skills. To be changed - sp will be simple integer in new db.
-        return Integer.parseInt(sp.split(",")[0]);
     }
 }

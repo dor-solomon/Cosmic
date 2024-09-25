@@ -20,7 +20,7 @@ public record CharacterStats(
         int mp,
         int maxHp,
         int maxMp,
-        String sp,
+        int sp,
         int ap,
         int gmLevel,
         int skin,

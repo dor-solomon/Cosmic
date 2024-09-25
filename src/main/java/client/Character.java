@@ -8451,7 +8451,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(10, stats.mp());
             ps.setInt(11, stats.maxHp());
             ps.setInt(12, stats.maxMp());
-            ps.setString(13, stats.sp());
+            ps.setString(13, String.valueOf(stats.sp()));
             ps.setInt(14, stats.ap());
             ps.setInt(15, stats.gmLevel());
             ps.setInt(16, stats.skin());
@@ -8566,15 +8566,8 @@ public class Character extends AbstractCharacterObject {
                     .mp(mp)
                     .maxHp(maxhp)
                     .maxMp(maxmp)
-                    .ap(remainingAp);
-
-            StringBuilder sps = new StringBuilder();
-            for (int j : remainingSp) {
-                sps.append(j);
-                sps.append(",");
-            }
-            String sp = sps.toString();
-            builder.sp(sp.substring(0, sp.length() - 1));
+                    .ap(remainingAp)
+                    .sp(remainingSp[0]);
         } finally {
             statWlock.unlock();
             effLock.unlock();
