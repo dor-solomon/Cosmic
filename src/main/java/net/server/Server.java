@@ -997,6 +997,7 @@ public class Server {
     private HikariConfig createHikariConfig(PgDatabaseConfig config) {
         final HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(config.url());
+        hikariConfig.setSchema(config.schema());
         hikariConfig.setUsername(config.username());
         hikariConfig.setPassword(config.password());
         hikariConfig.setInitializationFailTimeout(config.poolInitTimeout().toMillis());
