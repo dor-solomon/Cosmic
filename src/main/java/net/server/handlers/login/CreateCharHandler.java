@@ -22,7 +22,9 @@
 package net.server.handlers.login;
 
 import client.Client;
+import client.SkinColor;
 import client.creator.JobType;
+import client.creator.NewCharacterSpec;
 import client.creator.novice.BeginnerCreator;
 import client.creator.novice.LegendCreator;
 import client.creator.novice.NoblesseCreator;
@@ -30,54 +32,37 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import tools.PacketCreator;
 
+import java.util.Optional;
+
 public final class CreateCharHandler extends AbstractPacketHandler {
 
     @Override
     public void handlePacket(InPacket p, Client c) {
-        String name = p.readString();
-        int job = p.readInt();
-        int face = p.readInt();
-
-        int hair = p.readInt();
-        int haircolor = p.readInt();
-        int skincolor = p.readInt();
-
-        int top = p.readInt();
-        int bottom = p.readInt();
-        int shoes = p.readInt();
-        int weapon = p.readInt();
-        int gender = p.readByte();
-
-        /*
         NewCharacterSpec spec = NewCharacterSpec.builder()
+                .name(p.readString())
                 .type(parseJobType(p.readInt()))
                 .face(p.readInt())
                 .hair(p.readInt())
                 .hairColor(p.readInt())
-                .skin(p.readInt())
+                .skin(parseSkinColor(p.readInt()))
                 .topItemId(p.readInt())
                 .bottomItemId(p.readInt())
                 .shoesItemId(p.readInt())
                 .weaponItemId(p.readInt())
                 .gender(p.readByte())
                 .build();
-         */
 
-        int status;
-        switch (job) {
-        case 0: // Knights of Cygnus
-            status = NoblesseCreator.createCharacter(c, name, face, hair + haircolor, skincolor, top, bottom, shoes, weapon, gender);
-            break;
-        case 1: // Adventurer
-            status = BeginnerCreator.createCharacter(c, name, face, hair + haircolor, skincolor, top, bottom, shoes, weapon, gender);
-            break;
-        case 2: // Aran
-            status = LegendCreator.createCharacter(c, name, face, hair + haircolor, skincolor, top, bottom, shoes, weapon, gender);
-            break;
-        default:
-            c.sendPacket(PacketCreator.deleteCharResponse(0, 9));
-            return;
-        }
+        int status = switch (spec.type()) {
+            case KNIGHT_OF_CYGNUS -> NoblesseCreator.createCharacter(c, spec.name(), spec.face(), spec.hair() + spec.hairColor(),
+                    spec.skin().getId(), spec.topItemId(), spec.bottomItemId(), spec.shoesItemId(), spec.weaponItemId(),
+                    spec.gender());
+            case ADVENTURER -> BeginnerCreator.createCharacter(c, spec.name(), spec.face(), spec.hair() + spec.hairColor(),
+                    spec.skin().getId(), spec.topItemId(), spec.bottomItemId(), spec.shoesItemId(), spec.weaponItemId(),
+                    spec.gender());
+            case ARAN -> LegendCreator.createCharacter(c, spec.name(), spec.face(), spec.hair() + spec.hairColor(),
+                    spec.skin().getId(), spec.topItemId(), spec.bottomItemId(), spec.shoesItemId(), spec.weaponItemId(),
+                    spec.gender());
+        };
 
         if (status == -2) {
             c.sendPacket(PacketCreator.deleteCharResponse(0, 9));
@@ -91,5 +76,10 @@ public final class CreateCharHandler extends AbstractPacketHandler {
             case 2 -> JobType.ARAN;
             default -> throw new IllegalArgumentException("Invalid job type: " + value);
         };
+    }
+
+    private static SkinColor parseSkinColor(int value) {
+        return Optional.ofNullable(SkinColor.getById(value))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid skin color: " + value));
     }
 }
