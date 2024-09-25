@@ -179,6 +179,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8462,13 +8463,13 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(22, stats.meso());
             ps.setInt(23, stats.hpMpApUsed());
             ps.setInt(24, stats.spawnPortal());
-            ps.setInt(25, stats.party());
+            ps.setInt(25, Objects.requireNonNullElse(stats.party(), -1));
             ps.setInt(26, stats.buddyCapacity());
-            ps.setInt(27, stats.messenger());
-            ps.setInt(28, stats.messengerPosition());
-            ps.setInt(29, stats.mountLevel());
-            ps.setInt(30, stats.mountExp());
-            ps.setInt(31, stats.mountTiredness());
+            ps.setInt(27, Objects.requireNonNullElse(stats.messenger(), 0));
+            ps.setInt(28, Objects.requireNonNullElse(stats.messengerPosition(), 4));
+            ps.setInt(29, Objects.requireNonNullElse(stats.mountLevel(), 1));
+            ps.setInt(30, Objects.requireNonNullElse(stats.mountExp(), 0));
+            ps.setInt(31, Objects.requireNonNullElse(stats.mountTiredness(), 0));
             ps.setInt(32, stats.equipSlots());
             ps.setInt(33, stats.useSlots());
             ps.setInt(34, stats.setupSlots());
@@ -8487,8 +8488,8 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(47, stats.omokTies());
             ps.setString(48, stats.dataString());
             ps.setLong(49, stats.jailExpiration());
-            ps.setInt(50, stats.partnerId());
-            ps.setInt(51, stats.marriageItemId());
+            ps.setInt(50, Objects.requireNonNullElse(stats.partnerId(), -1));
+            ps.setInt(51, Objects.requireNonNullElse(stats.marriageItemId(), -1));
             ps.setTimestamp(52, new Timestamp(stats.lastExpGainTime()));
             ps.setInt(53, stats.ariantPoints());
             ps.setBoolean(54, stats.canRecvPartySearchInvite());
@@ -8531,16 +8532,26 @@ public class Character extends AbstractCharacterObject {
                 .omokTies(omokties)
                 .dataString(dataString)
                 .jailExpiration(jailExpiration)
-                .partnerId(partnerId)
-                .marriageItemId(marriageItemid)
                 .lastExpGainTime(lastExpGainTime)
                 .ariantPoints(ariantPoints)
                 .canRecvPartySearchInvite(canRecvPartySearchInvite)
-                .party(getPartyId())
                 .equipSlots(getSlots(InventoryType.EQUIP.getType()))
                 .useSlots(getSlots(InventoryType.USE.getType()))
                 .setupSlots(getSlots(InventoryType.SETUP.getType()))
                 .etcSlots(getSlots(InventoryType.ETC.getType()));
+
+        Party party = getParty();
+        if (party != null) {
+            builder.party(party.getId());
+        }
+
+        if (partnerId > 0) {
+            builder.partnerId(partnerId);
+        }
+
+        if (marriageItemid > 0) {
+            builder.marriageItemId(marriageItemid);
+        }
 
         effLock.lock();
         statWlock.lock();
@@ -8573,19 +8584,12 @@ public class Character extends AbstractCharacterObject {
         if (messenger != null) {
             builder.messenger(messenger.getId())
                     .messengerPosition(messengerposition);
-        } else {
-            builder.messenger(0)
-                    .messengerPosition(4);
         }
 
         if (maplemount != null) {
             builder.mountLevel(maplemount.getLevel())
                     .mountExp(maplemount.getExp())
                     .mountTiredness(maplemount.getTiredness());
-        } else {
-            builder.mountLevel(1)
-                    .mountExp(0)
-                    .mountTiredness(0);
         }
 
         return builder.build();
