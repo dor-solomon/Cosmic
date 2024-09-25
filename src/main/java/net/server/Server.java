@@ -1015,7 +1015,7 @@ public class Server {
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
         ChannelDependencies channelDependencies = ChannelDependencies.builder()
-                .characterCreator(new CharacterCreator(characterRepository))
+                .characterCreator(new CharacterCreator(connection, characterRepository))
                 .characterLoader(new CharacterLoader(monsterCardRepository))
                 .characterSaver(characterSaver)
                 .noteService(noteService)
