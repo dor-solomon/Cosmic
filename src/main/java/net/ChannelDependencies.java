@@ -1,11 +1,13 @@
 package net;
 
 import client.command.CommandsExecutor;
+import client.creator.CharacterCreator;
 import client.processor.action.MakerProcessor;
 import client.processor.npc.FredrickProcessor;
 import database.character.CharacterLoader;
 import database.character.CharacterSaver;
 import database.drop.DropProvider;
+import lombok.Builder;
 import server.shop.ShopFactory;
 import service.BanService;
 import service.NoteService;
@@ -16,14 +18,16 @@ import java.util.Objects;
 /**
  * @author Ponk
  */
+@Builder
 public record ChannelDependencies(
-        CharacterLoader characterLoader, CharacterSaver characterSaver, NoteService noteService,
-        FredrickProcessor fredrickProcessor, MakerProcessor makerProcessor, DropProvider dropProvider,
-        CommandsExecutor commandsExecutor, ShopFactory shopFactory, TransitionService transitionService,
-        BanService banService
+        CharacterCreator characterCreator, CharacterLoader characterLoader, CharacterSaver characterSaver,
+        NoteService noteService, FredrickProcessor fredrickProcessor, MakerProcessor makerProcessor,
+        DropProvider dropProvider, CommandsExecutor commandsExecutor, ShopFactory shopFactory,
+        TransitionService transitionService, BanService banService
 ) {
 
     public ChannelDependencies {
+        Objects.requireNonNull(characterCreator);
         Objects.requireNonNull(characterLoader);
         Objects.requireNonNull(characterSaver);
         Objects.requireNonNull(noteService);

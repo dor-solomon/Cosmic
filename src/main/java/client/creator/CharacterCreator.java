@@ -3,16 +3,16 @@ package client.creator;
 import client.inventory.Item;
 import constants.id.ItemId;
 import constants.id.MapId;
-import database.character.CharacterSaver;
+import database.character.CharacterRepository;
 
 public class CharacterCreator {
-    private final CharacterSaver chrSaver;
+    private final CharacterRepository chrRepository;
 
-    public CharacterCreator(CharacterSaver chrSaver) {
-        this.chrSaver = chrSaver;
+    public CharacterCreator(CharacterRepository chrRepository) {
+        this.chrRepository = chrRepository;
     }
 
-    public boolean createBeginner(NewCharacterSpec spec, int accountId, int worldId) {
+    public boolean createNew(NewCharacterSpec spec, int accountId, int worldId) {
         int mapId = getStartingMap(spec.type());
         Item guide = getStarterGuide(spec.type());
         // TODO, save:

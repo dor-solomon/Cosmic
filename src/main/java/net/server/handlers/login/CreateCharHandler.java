@@ -23,6 +23,7 @@ package net.server.handlers.login;
 
 import client.Client;
 import client.SkinColor;
+import client.creator.CharacterCreator;
 import client.creator.JobType;
 import client.creator.NewCharacterSpec;
 import client.creator.novice.BeginnerCreator;
@@ -35,6 +36,11 @@ import tools.PacketCreator;
 import java.util.Optional;
 
 public final class CreateCharHandler extends AbstractPacketHandler {
+    private final CharacterCreator characterCreator;
+
+    public CreateCharHandler(CharacterCreator characterCreator) {
+        this.characterCreator = characterCreator;
+    }
 
     @Override
     public void handlePacket(InPacket p, Client c) {
@@ -51,6 +57,8 @@ public final class CreateCharHandler extends AbstractPacketHandler {
                 .weaponItemId(p.readInt())
                 .gender(p.readByte())
                 .build();
+
+        characterCreator.createNew(spec, c.getAccID(), c.getWorld());
 
         int status = switch (spec.type()) {
             case KNIGHT_OF_CYGNUS -> NoblesseCreator.createCharacter(c, spec.name(), spec.face(), spec.hair() + spec.hairColor(),

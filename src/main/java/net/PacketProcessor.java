@@ -286,7 +286,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.SERVERLIST_REQUEST, new ServerlistRequestHandler());
         registerHandler(RecvOpcode.SERVERSTATUS_REQUEST, new ServerStatusRequestHandler());
         registerHandler(RecvOpcode.CHECK_CHAR_NAME, new CheckCharNameHandler());
-        registerHandler(RecvOpcode.CREATE_CHAR, new CreateCharHandler());
+        registerHandler(RecvOpcode.CREATE_CHAR, new CreateCharHandler(channelDeps.characterCreator()));
         registerHandler(RecvOpcode.DELETE_CHAR, new DeleteCharHandler());
         registerHandler(RecvOpcode.VIEW_ALL_CHAR, new ViewAllCharHandler());
         registerHandler(RecvOpcode.PICK_ALL_CHAR, new ViewAllCharSelectedHandler());

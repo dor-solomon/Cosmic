@@ -27,6 +27,7 @@ import client.Family;
 import client.SkillFactory;
 import client.command.CommandContext;
 import client.command.CommandsExecutor;
+import client.creator.CharacterCreator;
 import client.inventory.Item;
 import client.inventory.ItemFactory;
 import client.inventory.manipulator.CashIdGenerator;
@@ -1004,24 +1005,29 @@ public class Server {
         return hikariConfig;
     }
 
+    // TODO: set up proper dependency injection with a framework such as Dagger or Guice.
     private ChannelDependencies registerChannelDependencies(PgDatabaseConnection connection) {
         CharacterRepository characterRepository = new CharacterRepository();
         MonsterCardRepository monsterCardRepository = new MonsterCardRepository(connection);
-        CharacterLoader characterLoader = new CharacterLoader(monsterCardRepository);
         CharacterSaver characterSaver = new CharacterSaver(connection, characterRepository, monsterCardRepository);
         TransitionService transitionService = new TransitionService(characterSaver);
-        BanService banService = new BanService(transitionService);
         NoteService noteService = new NoteService(new NoteDao(connection));
-        MakerProcessor makerProcessor = new MakerProcessor(new MakerInfoProvider(new MakerRepository(connection)));
-        FredrickProcessor fredrickProcessor = new FredrickProcessor(noteService);
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
-        CommandContext commandContext = new CommandContext(null, dropProvider, shopFactory,
-                characterSaver, transitionService);
-        CommandsExecutor commandsExecutor = new CommandsExecutor(commandContext);
-        ChannelDependencies channelDependencies = new ChannelDependencies(characterLoader, characterSaver, noteService,
-                fredrickProcessor, makerProcessor, dropProvider, commandsExecutor, shopFactory, transitionService,
-                banService);
+        ChannelDependencies channelDependencies = ChannelDependencies.builder()
+                .characterCreator(new CharacterCreator(characterRepository))
+                .characterLoader(new CharacterLoader(monsterCardRepository))
+                .characterSaver(characterSaver)
+                .noteService(noteService)
+                .fredrickProcessor(new FredrickProcessor(noteService))
+                .makerProcessor(new MakerProcessor(new MakerInfoProvider(new MakerRepository(connection))))
+                .dropProvider(dropProvider)
+                .commandsExecutor(new CommandsExecutor(new CommandContext(null, dropProvider, shopFactory,
+                        characterSaver, transitionService)))
+                .shopFactory(shopFactory)
+                .transitionService(transitionService)
+                .banService(new BanService(transitionService))
+                .build();
 
         PacketProcessor.registerGameHandlerDependencies(channelDependencies);
 
