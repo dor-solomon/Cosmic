@@ -9,6 +9,7 @@ import database.character.CharacterSaver;
 import database.drop.DropProvider;
 import lombok.Builder;
 import server.shop.ShopFactory;
+import service.AccountService;
 import service.BanService;
 import service.NoteService;
 import service.TransitionService;
@@ -20,6 +21,7 @@ import java.util.Objects;
  */
 @Builder
 public record ChannelDependencies(
+        AccountService accountService,
         CharacterCreator characterCreator, CharacterLoader characterLoader, CharacterSaver characterSaver,
         NoteService noteService, FredrickProcessor fredrickProcessor, MakerProcessor makerProcessor,
         DropProvider dropProvider, CommandsExecutor commandsExecutor, ShopFactory shopFactory,
@@ -27,6 +29,7 @@ public record ChannelDependencies(
 ) {
 
     public ChannelDependencies {
+        Objects.requireNonNull(accountService);
         Objects.requireNonNull(characterCreator);
         Objects.requireNonNull(characterLoader);
         Objects.requireNonNull(characterSaver);

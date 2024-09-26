@@ -64,6 +64,7 @@ public class CharacterSaver {
         try (Handle handle = pgConnection.getHandle()) {
             handle.useTransaction(h -> doPostgresSave(h, chr));
         } catch (Exception e) {
+            System.err.println("Error saving chr to PG: " + e.getMessage());
             log.error("Error saving chr {} to PG", chr.getName(), e);
         }
 

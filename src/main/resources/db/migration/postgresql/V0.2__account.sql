@@ -8,7 +8,7 @@ CREATE TABLE account
     logged_in          smallint  DEFAULT 0     NOT NULL,
     created_at         timestamp DEFAULT now() NOT NULL,
     last_login         timestamp,
-    birthday           date                    NOT NULL,
+    birthdate          date                    NOT NULL,
     banned             boolean   DEFAULT false NOT NULL,
     banreason          text,
     macs               text,
@@ -25,6 +25,10 @@ CREATE TABLE account
     PRIMARY KEY (id),
     UNIQUE (name)
 );
-CREATE UNIQUE INDEX lower_account_name_idx ON "account" (lower(name) );
-GRANT SELECT, UPDATE ON TABLE account TO ${server-username};
+CREATE UNIQUE INDEX lower_account_name_idx ON "account" (lower(name));
+GRANT SELECT, INSERT, UPDATE ON TABLE account TO ${server-username};
 GRANT USAGE ON SEQUENCE account_id_seq TO ${server-username};
+ALTER SEQUENCE account_id_seq RESTART WITH 1000;
+
+-- INSERT INTO account (id, name, password, pin, pic, birthdate)
+-- VALUES (1, 'admin', '$2y$12$aFD9BDeUocDMY1X4tDYDyeJw/HhkQwCQWs3KAY7gCaRG0cpqJcaL.', '0000', '000000', '2005-05-11');

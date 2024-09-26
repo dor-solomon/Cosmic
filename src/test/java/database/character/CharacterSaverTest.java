@@ -9,6 +9,7 @@ import database.PgDatabaseConfig;
 import database.PgDatabaseConnection;
 import database.migration.FlywayRunner;
 import database.monsterbook.MonsterCardRepository;
+import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -120,10 +121,12 @@ class CharacterSaverTest {
                 SELECT level
                 FROM chr
                 WHERE id = :id""";
-        return pgConnection.getHandle().createQuery(sql)
-                .bind("id", chrId)
-                .mapTo(Integer.class)
-                .one();
+        try (Handle handle = pgConnection.getHandle()) {
+            return handle.createQuery(sql)
+                    .bind("id", chrId)
+                    .mapTo(Integer.class)
+                    .one();
+        }
     }
 
 }

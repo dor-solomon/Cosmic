@@ -7,7 +7,9 @@ import constants.id.ItemId;
 import constants.id.MapId;
 import database.PgDatabaseConnection;
 import database.character.CharacterRepository;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class CharacterCreator {
     private final PgDatabaseConnection connection;
     private final CharacterRepository chrRepository;
@@ -20,9 +22,13 @@ public class CharacterCreator {
     public boolean createNew(NewCharacterSpec spec, int accountId, int worldId) {
         CharacterStats stats = getStarterStats(spec, accountId, worldId);
 
-        connection.getHandle().useTransaction(h -> {
-            // chrRepository.insert(h, stats); // TODO: account needs to exist first
-        });
+        try {
+            connection.getHandle().useTransaction(h -> {
+                chrRepository.insert(h, stats);
+            });
+        } catch (Exception e) {
+            log.warn("Failed to create new character in PG", e);
+        }
         Item guide = getStarterGuide(spec.type());
         // TODO, save:
         // - character

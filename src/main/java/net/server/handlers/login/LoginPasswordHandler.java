@@ -33,6 +33,7 @@ import net.server.coordinator.session.Hwid;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import service.AccountService;
 import service.TransitionService;
 import tools.BCrypt;
 import tools.DatabaseConnection;
@@ -42,17 +43,18 @@ import tools.PacketCreator;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
 public final class LoginPasswordHandler implements PacketHandler {
     private static final Logger log = LoggerFactory.getLogger(LoginPasswordHandler.class);
+
+    private final AccountService accountService;
     private final TransitionService transitionService;
 
-    public LoginPasswordHandler(TransitionService transitionService) {
+    public LoginPasswordHandler(AccountService accountService, TransitionService transitionService) {
+        this.accountService = accountService;
         this.transitionService = transitionService;
     }
 
@@ -80,21 +82,10 @@ public final class LoginPasswordHandler implements PacketHandler {
 
 
         if (YamlConfig.config.server.AUTOMATIC_REGISTER && loginok == 5) {
-            try (Connection con = DatabaseConnection.getConnection();
-                 PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (name, password, birthday, tempban) VALUES (?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) { //Jayd: Added birthday, tempban
-                ps.setString(1, login);
-                ps.setString(2, BCrypt.hashpw(pwd, BCrypt.gensalt(12)));
-                ps.setDate(3, Date.valueOf(DefaultDates.getBirthday()));
-                ps.setTimestamp(4, Timestamp.valueOf(DefaultDates.getTempban()));
-                ps.executeUpdate();
-
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    rs.next();
-                    c.setAccID(rs.getInt(1));
-                }
-            } catch (SQLException e) {
-                c.setAccID(-1);
-                e.printStackTrace();
+            try {
+                int accountId = createAccountPostgres(login, pwd);
+                createAccountMysql(accountId, login, pwd);
+                c.setAccID(accountId);
             } finally {
                 loginok = c.login(login, pwd, hwid);
             }
@@ -123,6 +114,24 @@ public final class LoginPasswordHandler implements PacketHandler {
             login(c);
         } else {
             c.sendPacket(PacketCreator.getLoginFailed(7));
+        }
+    }
+
+    private int createAccountPostgres(String name, String password) {
+        return accountService.createNew(name, password);
+    }
+
+    private void createAccountMysql(int id, String name, String password) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (id, name, password, birthday, tempban) VALUES (?, ?, ?, ?, ?);")) {
+            ps.setInt(1, id);
+            ps.setString(2, name);
+            ps.setString(3, BCrypt.hashpw(password, BCrypt.gensalt(12)));
+            ps.setDate(4, Date.valueOf(DefaultDates.getBirthday()));
+            ps.setTimestamp(5, Timestamp.valueOf(DefaultDates.getTempban()));
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

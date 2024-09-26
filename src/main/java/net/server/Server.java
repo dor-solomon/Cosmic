@@ -44,6 +44,7 @@ import constants.net.OpcodeConstants;
 import constants.net.ServerConstants;
 import database.PgDatabaseConfig;
 import database.PgDatabaseConnection;
+import database.account.AccountRepository;
 import database.character.CharacterLoader;
 import database.character.CharacterRepository;
 import database.character.CharacterSaver;
@@ -88,6 +89,7 @@ import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.quest.Quest;
 import server.shop.ShopFactory;
+import service.AccountService;
 import service.BanService;
 import service.NoteService;
 import service.TransitionService;
@@ -1015,6 +1017,7 @@ public class Server {
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
         ChannelDependencies channelDependencies = ChannelDependencies.builder()
+                .accountService(new AccountService(new AccountRepository(connection)))
                 .characterCreator(new CharacterCreator(connection, characterRepository))
                 .characterLoader(new CharacterLoader(monsterCardRepository))
                 .characterSaver(characterSaver)

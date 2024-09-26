@@ -22,25 +22,21 @@
 package net.server.handlers.login;
 
 import client.Client;
+import lombok.extern.slf4j.Slf4j;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import service.TransitionService;
 import tools.PacketCreator;
 
 /*
  * @author David
  */
+@Slf4j
 public final class GuestLoginHandler extends AbstractPacketHandler {
-    private final TransitionService transitionService;
-
-    public GuestLoginHandler(TransitionService transitionService) {
-        this.transitionService = transitionService;
-    }
 
     @Override
     public final void handlePacket(InPacket p, Client c) {
         c.sendPacket(PacketCreator.sendGuestTOS());
         //System.out.println(slea.toString());
-        new LoginPasswordHandler(transitionService).handlePacket(p, c);
+        log.error("Unexpected guest login. How did you trigger this? It shouldn't be possible in v83. Packet: {}", p);
     }
 }
