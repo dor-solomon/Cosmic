@@ -41,7 +41,6 @@ public class ServerConfig {
     public int BYPASS_PIN_EXPIRATION;
 
     public boolean AUTOMATIC_REGISTER;
-    public boolean BCRYPT_MIGRATION;
     public boolean COLLECTIVE_CHARSLOT;
     public boolean DETERRED_MULTICLIENT;
 

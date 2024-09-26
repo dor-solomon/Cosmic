@@ -39,10 +39,6 @@ import tools.DatabaseConnection;
 import tools.HexTool;
 import tools.PacketCreator;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -63,12 +59,6 @@ public final class LoginPasswordHandler implements PacketHandler {
     @Override
     public boolean validateState(Client c) {
         return !c.isLoggedIn();
-    }
-
-    private static String hashpwSHA512(String pwd) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest digester = MessageDigest.getInstance("SHA-512");
-        digester.update(pwd.getBytes(StandardCharsets.UTF_8), 0, pwd.length());
-        return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase();
     }
 
     @Override
@@ -93,7 +83,7 @@ public final class LoginPasswordHandler implements PacketHandler {
             try (Connection con = DatabaseConnection.getConnection();
                  PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (name, password, birthday, tempban) VALUES (?, ?, ?, ?);", Statement.RETURN_GENERATED_KEYS)) { //Jayd: Added birthday, tempban
                 ps.setString(1, login);
-                ps.setString(2, YamlConfig.config.server.BCRYPT_MIGRATION ? BCrypt.hashpw(pwd, BCrypt.gensalt(12)) : hashpwSHA512(pwd));
+                ps.setString(2, BCrypt.hashpw(pwd, BCrypt.gensalt(12)));
                 ps.setDate(3, Date.valueOf(DefaultDates.getBirthday()));
                 ps.setTimestamp(4, Timestamp.valueOf(DefaultDates.getTempban()));
                 ps.executeUpdate();
@@ -102,24 +92,11 @@ public final class LoginPasswordHandler implements PacketHandler {
                     rs.next();
                     c.setAccID(rs.getInt(1));
                 }
-            } catch (SQLException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            } catch (SQLException e) {
                 c.setAccID(-1);
                 e.printStackTrace();
             } finally {
                 loginok = c.login(login, pwd, hwid);
-            }
-        }
-
-        if (YamlConfig.config.server.BCRYPT_MIGRATION && (loginok <= -10)) { // -10 means migration to bcrypt, -23 means TOS wasn't accepted
-            try (Connection con = DatabaseConnection.getConnection();
-                 PreparedStatement ps = con.prepareStatement("UPDATE accounts SET password = ? WHERE name = ?;")) {
-                ps.setString(1, BCrypt.hashpw(pwd, BCrypt.gensalt(12)));
-                ps.setString(2, login);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                loginok = (loginok == -10) ? 0 : 23;
             }
         }
 
