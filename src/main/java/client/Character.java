@@ -8487,7 +8487,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(46, stats.omokLosses());
             ps.setInt(47, stats.omokTies());
             ps.setString(48, stats.dataString());
-            ps.setLong(49, stats.jailExpiration());
+            ps.setLong(49, Objects.requireNonNullElse(stats.jailExpiration(), 0L));
             ps.setInt(50, Objects.requireNonNullElse(stats.partnerId(), -1));
             ps.setInt(51, Objects.requireNonNullElse(stats.marriageItemId(), -1));
             ps.setTimestamp(52, new Timestamp(stats.lastExpGainTime()));
