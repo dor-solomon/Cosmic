@@ -4,10 +4,18 @@ import database.account.Account;
 import database.account.AccountRepository;
 import lombok.extern.slf4j.Slf4j;
 import tools.BCrypt;
+import tools.DatabaseConnection;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Optional;
 
+/**
+ * @author Ponk
+ */
 @Slf4j
 public class AccountService {
     private static final int PASSWORD_HASH_SALT_LOG_ROUNDS = 12;
@@ -40,5 +48,53 @@ public class AccountService {
 
     private String hashPassword(String password) {
         return BCrypt.hashpw(password, BCrypt.gensalt(PASSWORD_HASH_SALT_LOG_ROUNDS));
+    }
+
+    public Optional<Account> getAccount(int accountId) {
+        return accountRepository.findById(accountId);
+    }
+
+    public boolean acceptTos(int accountId) {
+        acceptTosMysql(accountId);
+        acceptTosPostgres(accountId);
+        return true;
+    }
+
+    private boolean acceptTosMysql(int accountId) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT `tos` FROM accounts WHERE id = ?")) {
+                ps.setInt(1, accountId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        if (rs.getByte("tos") == 1) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET tos = 1 WHERE id = ?")) {
+                ps.setInt(1, accountId);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    private boolean acceptTosPostgres(int accountId) {
+        Optional<Account> account = getAccount(accountId);
+        if (account.isEmpty()) {
+            return false;
+        }
+
+        if (account.get().acceptedTos()) {
+            return false;
+        }
+
+        accountRepository.setTos(accountId, true);
+        return true;
     }
 }

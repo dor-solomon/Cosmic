@@ -54,14 +54,10 @@ import server.TimerManager;
 import server.life.Monster;
 import tools.BCrypt;
 import tools.DatabaseConnection;
-import tools.HexTool;
 import tools.PacketCreator;
 
 import javax.script.ScriptEngine;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -894,35 +890,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return QuestScriptManager.getInstance().getQM(this);
     }
 
-    public boolean acceptToS() {
-        if (accountName == null) {
-            return true;
-        }
-
-        boolean disconnect = false;
-        try (Connection con = DatabaseConnection.getConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT `tos` FROM accounts WHERE id = ?")) {
-                ps.setInt(1, accId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        if (rs.getByte("tos") == 1) {
-                            disconnect = true;
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET tos = 1 WHERE id = ?")) {
-                ps.setInt(1, accId);
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return disconnect;
-    }
-
     public void lockClient() {
         lock.lock();
     }
@@ -943,16 +910,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void releaseClient() {
         unlockClient();
         actionsSemaphore.release();
-    }
-
-    private static boolean checkHash(String hash, String type, String password) {
-        try {
-            MessageDigest digester = MessageDigest.getInstance(type);
-            digester.update(password.getBytes(StandardCharsets.UTF_8), 0, password.length());
-            return HexTool.toHexString(digester.digest()).replace(" ", "").toLowerCase().equals(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Encoding the string failed", e);
-        }
     }
 
     public short getAvailableCharacterSlots() {

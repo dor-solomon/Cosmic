@@ -1,5 +1,6 @@
 package database;
 
+import database.account.AccountRowMapper;
 import database.drop.GlobalMonsterDropRowMapper;
 import database.drop.MonsterDropRowMapper;
 import database.maker.MakerIngredientRowMapper;
@@ -26,6 +27,7 @@ public final class JdbiConfig {
 
     private static List<RowMapper<?>> rowMappers() {
         return List.of(
+                new AccountRowMapper(),
                 new NoteRowMapper(),
                 new MakerReagentRowMapper(),
                 new MakerRecipeRowMapper(),
