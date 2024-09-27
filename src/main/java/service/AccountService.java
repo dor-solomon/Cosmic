@@ -115,14 +115,40 @@ public class AccountService {
     }
 
     private void setPinPostgres(int accountId, String pin) {
-        boolean success = false;
         try {
-            success = accountRepository.setPin(accountId, pin);
+            boolean success = accountRepository.setPin(accountId, pin);
+            if (!success) {
+                log.warn("Failed to set pin (no updated rows) - account:{}, pin:{}", accountId, pin);
+            }
         } catch (Exception e) {
             log.error("Failed to set pin due to error - account:{}, pin:{}", accountId, pin, e);
         }
-        if (!success) {
-            log.warn("Failed to set pin due to no updated rows - account:{}, pin:{}", accountId, pin);
+    }
+
+    public void setPic(int accountId, String pic) {
+        setPicMysql(accountId, pic);
+        setPicPostgres(accountId, pic);
+    }
+
+    private void setPicMysql(int accountId, String pic) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pic = ? WHERE id = ?")) {
+            ps.setString(1, pic);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setPicPostgres(int accountId, String pic) {
+        try {
+            boolean success = accountRepository.setPic(accountId, pic);
+            if (!success) {
+                log.warn("Failed to set pic (no updated rows) - account:{}, pic:{}", accountId, pic);
+            }
+        } catch (Exception e) {
+            log.error("Failed to set pic - account:{}, pin:{}", accountId, pic, e);
         }
     }
 }

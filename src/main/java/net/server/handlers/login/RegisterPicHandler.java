@@ -10,6 +10,7 @@ import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import service.AccountService;
 import tools.PacketCreator;
 
 import java.net.InetAddress;
@@ -18,14 +19,10 @@ import java.net.UnknownHostException;
 public final class RegisterPicHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(RegisterPicHandler.class);
 
-    private static int parseAntiMulticlientError(AntiMulticlientResult res) {
-        return switch (res) {
-            case REMOTE_PROCESSING -> 10;
-            case REMOTE_LOGGEDIN -> 7;
-            case REMOTE_NO_MATCH -> 17;
-            case COORDINATOR_ERROR -> 8;
-            default -> 9;
-        };
+    private final AccountService accountService;
+
+    public RegisterPicHandler(AccountService accountService) {
+        this.accountService = accountService;
     }
 
     @Override
@@ -67,6 +64,7 @@ public final class RegisterPicHandler extends AbstractPacketHandler {
 
         String pic = p.readString();
         if (c.getPic() == null || c.getPic().equals("")) {
+            accountService.setPic(c.getAccID(), pic);
             c.setPic(pic);
 
             c.setWorld(server.getCharacterWorld(charId));
@@ -93,5 +91,15 @@ public final class RegisterPicHandler extends AbstractPacketHandler {
         } else {
             SessionCoordinator.getInstance().closeSession(c, true);
         }
+    }
+
+    private static int parseAntiMulticlientError(AntiMulticlientResult res) {
+        return switch (res) {
+            case REMOTE_PROCESSING -> 10;
+            case REMOTE_LOGGEDIN -> 7;
+            case REMOTE_NO_MATCH -> 17;
+            case COORDINATOR_ERROR -> 8;
+            default -> 9;
+        };
     }
 }

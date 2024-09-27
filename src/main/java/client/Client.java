@@ -470,14 +470,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void setPic(String pic) {
         this.pic = pic;
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pic = ? WHERE id = ?")) {
-            ps.setString(1, pic);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public String getPic() {

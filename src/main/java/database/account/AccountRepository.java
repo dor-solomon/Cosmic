@@ -68,4 +68,17 @@ public class AccountRepository {
                     .execute() > 0;
         }
     }
+
+    public boolean setPic(int accountId, String pic) {
+        String sql = """
+                UPDATE account
+                SET pic = :pic
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("pic", pic)
+                    .execute() > 0;
+        }
+    }
 }

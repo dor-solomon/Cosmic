@@ -293,11 +293,12 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.PICK_ALL_CHAR, new ViewAllCharSelectedHandler());
         registerHandler(RecvOpcode.REGISTER_PIN, new RegisterPinHandler(channelDeps.accountService()));
         registerHandler(RecvOpcode.GUEST_LOGIN, new GuestLoginHandler());
-        registerHandler(RecvOpcode.REGISTER_PIC, new RegisterPicHandler());
+        registerHandler(RecvOpcode.REGISTER_PIC, new RegisterPicHandler(channelDeps.accountService()));
         registerHandler(RecvOpcode.CHAR_SELECT_WITH_PIC, new CharSelectedWithPicHandler());
         registerHandler(RecvOpcode.SET_GENDER, new SetGenderHandler());
         registerHandler(RecvOpcode.VIEW_ALL_WITH_PIC, new ViewAllCharSelectedWithPicHandler());
-        registerHandler(RecvOpcode.VIEW_ALL_PIC_REGISTER, new ViewAllCharRegisterPicHandler());
+        registerHandler(RecvOpcode.VIEW_ALL_PIC_REGISTER, new ViewAllCharRegisterPicHandler(
+                channelDeps.accountService()));
     }
 
     private void registerChannelHandlers() {
