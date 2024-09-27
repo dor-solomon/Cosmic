@@ -42,6 +42,7 @@ import server.CashShop;
 import server.CashShop.CashItem;
 import server.CashShop.CashItemFactory;
 import server.ItemInformationProvider;
+import service.AccountService;
 import service.NoteService;
 import tools.PacketCreator;
 import tools.Pair;
@@ -56,9 +57,11 @@ public final class CashOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(CashOperationHandler.class);
 
     private final NoteService noteService;
+    private final AccountService accountService;
 
-    public CashOperationHandler(NoteService noteService) {
+    public CashOperationHandler(NoteService noteService, AccountService accountService) {
         this.noteService = noteService;
+        this.accountService = accountService;
     }
 
     @Override
@@ -257,14 +260,13 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                         return;
                     }
                     cs.gainCash(cash, cItem, chr.getWorld());
-                    if (c.gainCharacterSlot()) {
-                        c.sendPacket(PacketCreator.showBoughtCharacterSlot(c.getCharacterSlots()));
-                        c.sendPacket(PacketCreator.showCash(chr));
-                    } else {
+                    if (!accountService.addChrSlot(c)) {
                         log.warn("Could not add a chr slot to {}'s account", Character.makeMapleReadable(chr.getName()));
                         c.enableCSActions();
                         return;
                     }
+                    c.sendPacket(PacketCreator.showBoughtCharacterSlot(c.getCharacterSlots()));
+                    c.sendPacket(PacketCreator.showCash(chr));
                 } else if (action == 0x0D) { // Take from Cash Inventory
                     Item item = cs.findByCashId(p.readInt());
                     if (item == null) {

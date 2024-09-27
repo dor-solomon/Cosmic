@@ -82,6 +82,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class Client extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(Client.class);
     private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+    private static final int MAX_CHR_SLOTS = 15;
 
     public static final int LOGIN_NOTLOGGEDIN = 0;
     public static final int LOGIN_SERVER_TRANSITION = 1;
@@ -917,20 +918,12 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public boolean canGainCharacterSlot() {
-        return characterSlots < 15;
+        return characterSlots < MAX_CHR_SLOTS;
     }
 
-    public synchronized boolean gainCharacterSlot() {
+    public boolean gainCharacterSlot() {
         if (canGainCharacterSlot()) {
-            try (Connection con = DatabaseConnection.getConnection();
-                 PreparedStatement ps = con.prepareStatement("UPDATE accounts SET characterslots = ? WHERE id = ?")) {
-                ps.setInt(1, this.characterSlots += 1);
-                ps.setInt(2, accId);
-                ps.executeUpdate();
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            characterSlots++;
             return true;
         }
         return false;

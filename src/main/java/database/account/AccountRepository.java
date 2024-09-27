@@ -81,4 +81,17 @@ public class AccountRepository {
                     .execute() > 0;
         }
     }
+
+    public boolean setChrSlots(int accountId, int chrSlots) {
+        String sql = """
+                UPDATE account
+                SET chr_slots = :chrSlots
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("chrSlots", chrSlots)
+                    .execute() > 0;
+        }
+    }
 }

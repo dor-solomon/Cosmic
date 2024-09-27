@@ -64,6 +64,7 @@ import server.maps.MapleTVEffect;
 import server.maps.PlayerShopItem;
 import server.shop.Shop;
 import server.shop.ShopFactory;
+import service.AccountService;
 import service.NoteService;
 import tools.PacketCreator;
 import tools.Pair;
@@ -82,10 +83,12 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
 
     private final NoteService noteService;
     private final ShopFactory shopFactory;
+    private final AccountService accountService;
 
-    public UseCashItemHandler(NoteService noteService, ShopFactory shopFactory) {
+    public UseCashItemHandler(NoteService noteService, ShopFactory shopFactory, AccountService accountService) {
         this.noteService = noteService;
         this.shopFactory = shopFactory;
+        this.accountService = accountService;
     }
 
     @Override
@@ -493,7 +496,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
             remove(c, position, itemId);
             c.sendPacket(PacketCreator.enableActions());
         } else if (itemType == 543) {
-            if (itemId == ItemId.MAPLE_LIFE_B && !c.gainCharacterSlot()) {
+            if (itemId == ItemId.MAPLE_LIFE_B && !accountService.addChrSlot(c)) {
                 player.dropMessage(1, "You have already used up all 12 extra character slots.");
                 c.sendPacket(PacketCreator.enableActions());
                 return;

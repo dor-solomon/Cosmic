@@ -1,5 +1,6 @@
 package service;
 
+import client.Client;
 import database.account.Account;
 import database.account.AccountRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -151,4 +152,30 @@ public class AccountService {
             log.error("Failed to set pic - account:{}, pin:{}", accountId, pic, e);
         }
     }
+
+    public boolean addChrSlot(Client c) {
+        if (!c.gainCharacterSlot()) {
+            return false;
+        }
+
+        int newChrSlots = c.getCharacterSlots() + 1;
+        setChrSlotsMysql(c.getAccID(), newChrSlots);
+        return setChrSlotsPostgres(c.getAccID(), newChrSlots);
+    }
+
+    private void setChrSlotsMysql(int accountId, int chrSlots) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET characterslots = ? WHERE id = ?")) {
+            ps.setInt(1, chrSlots);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean setChrSlotsPostgres(int accountId, int chrSlots) {
+        return accountRepository.setChrSlots(accountId, chrSlots);
+    }
+
 }
