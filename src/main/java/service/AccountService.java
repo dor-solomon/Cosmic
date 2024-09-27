@@ -106,6 +106,30 @@ public class AccountService {
         return true;
     }
 
+    public boolean setGender(int accountId, byte gender) {
+        setGenderMysql(accountId, gender);
+        return setGenderPostgres(accountId, gender);
+    }
+
+    private void setGenderMysql(int accountId, byte gender) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET gender = ? WHERE id = ?")) {
+            ps.setByte(1, gender);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean setGenderPostgres(int accountId, byte gender) {
+        boolean success = accountRepository.setGender(accountId, gender);
+        if (!success) {
+            log.warn("Failed to set gender, account:{}, gender:{}", accountId, gender);
+        }
+        return success;
+    }
+
     public void setPin(int accountId, String pin) {
         setPinMysql(accountId, pin);
         setPinPostgres(accountId, pin);

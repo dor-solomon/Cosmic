@@ -87,8 +87,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
     private static final int MAX_CHR_SLOTS = 15;
 
-    public static final byte NO_GENDER = 10;
-
     public static final int LOGIN_NOTLOGGEDIN = 0;
     public static final int LOGIN_SERVER_TRANSITION = 1;
     public static final int LOGIN_LOGGEDIN = 2;
@@ -299,7 +297,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.characterSlots = account.chrSlots();
         this.pin = account.pin();
         this.pic = account.pic();
-        this.gender = Objects.requireNonNullElse(account.gender(), NO_GENDER);
+        this.gender = Objects.requireNonNullElse(account.gender(), Gender.NOT_SET);
         Calendar calendar = Calendar.getInstance();
         LocalDate birthdate = account.birthdate();
         calendar.set(birthdate.getYear(), birthdate.getMonthValue() - 1, birthdate.getDayOfMonth());
@@ -988,18 +986,11 @@ public class Client extends ChannelInboundHandlerAdapter {
         return gender;
     }
 
-    public void setGender(byte m) {
-        this.gender = m;
-
-        // TODO: move to AccountService
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET gender = ? WHERE id = ?")) {
-            ps.setByte(1, gender);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public void setGender(byte gender) {
+        if (gender != Gender.MALE && gender != Gender.FEMALE) {
+            throw new IllegalArgumentException("Invalid gender: " + gender);
         }
+        this.gender = gender;
     }
 
     private void announceDisableServerMessage() {

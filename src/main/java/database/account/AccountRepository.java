@@ -73,6 +73,19 @@ public class AccountRepository {
         }
     }
 
+    public boolean setGender(int accountId, byte gender) {
+        String sql = """
+                UPDATE account
+                SET gender = :gender
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("gender", gender)
+                    .execute() > 0;
+        }
+    }
+
     public boolean setPin(int accountId, String pin) {
         String sql = """
                 UPDATE account
