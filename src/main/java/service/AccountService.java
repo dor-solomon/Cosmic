@@ -97,4 +97,32 @@ public class AccountService {
         accountRepository.setTos(accountId, true);
         return true;
     }
+
+    public void setPin(int accountId, String pin) {
+        setPinMysql(accountId, pin);
+        setPinPostgres(accountId, pin);
+    }
+
+    private void setPinMysql(int accountId, String pin) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pin = ? WHERE id = ?")) {
+            ps.setString(1, pin);
+            ps.setInt(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setPinPostgres(int accountId, String pin) {
+        boolean success = false;
+        try {
+            success = accountRepository.setPin(accountId, pin);
+        } catch (Exception e) {
+            log.error("Failed to set pin due to error - account:{}, pin:{}", accountId, pin, e);
+        }
+        if (!success) {
+            log.warn("Failed to set pin due to no updated rows - account:{}, pin:{}", accountId, pin);
+        }
+    }
 }

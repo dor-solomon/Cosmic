@@ -55,4 +55,17 @@ public class AccountRepository {
                     .execute();
         }
     }
+
+    public boolean setPin(int accountId, String pin) {
+        String sql = """
+                UPDATE account
+                SET pin = :pin
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("pin", pin)
+                    .execute() > 0;
+        }
+    }
 }

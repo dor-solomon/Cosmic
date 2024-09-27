@@ -25,27 +25,35 @@ import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.coordinator.session.SessionCoordinator;
+import service.AccountService;
 import tools.PacketCreator;
 
-/*
+/**
  * @author Rob
+ * @author Ponk
  */
 public final class RegisterPinHandler extends AbstractPacketHandler {
+    private final AccountService accountService;
+
+    public RegisterPinHandler(final AccountService accountService) {
+        this.accountService = accountService;
+    }
+
     @Override
-    public final void handlePacket(InPacket p, Client c) {
-        byte c2 = p.readByte();
-        if (c2 == 0) {
+    public void handlePacket(InPacket p, Client c) {
+        boolean cancel = p.readByte() == 0;
+        if (cancel) {
             SessionCoordinator.getInstance().closeSession(c, false);
             c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
-        } else {
-            String pin = p.readString();
-            if (pin != null) {
-                c.setPin(pin);
-                c.sendPacket(PacketCreator.pinRegistered());
-
-                SessionCoordinator.getInstance().closeSession(c, false);
-                c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
-            }
+            return;
         }
+
+        String pin = p.readString();
+        accountService.setPin(c.getAccID(), pin);
+        c.setPin(pin);
+        c.sendPacket(PacketCreator.pinRegistered());
+
+        SessionCoordinator.getInstance().closeSession(c, false);
+        c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
     }
 }

@@ -446,14 +446,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public void setPin(String pin) {
         this.pin = pin;
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET pin = ? WHERE id = ?")) {
-            ps.setString(1, pin);
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public String getPin() {

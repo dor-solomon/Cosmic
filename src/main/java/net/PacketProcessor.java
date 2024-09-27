@@ -291,7 +291,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.DELETE_CHAR, new DeleteCharHandler());
         registerHandler(RecvOpcode.VIEW_ALL_CHAR, new ViewAllCharHandler());
         registerHandler(RecvOpcode.PICK_ALL_CHAR, new ViewAllCharSelectedHandler());
-        registerHandler(RecvOpcode.REGISTER_PIN, new RegisterPinHandler());
+        registerHandler(RecvOpcode.REGISTER_PIN, new RegisterPinHandler(channelDeps.accountService()));
         registerHandler(RecvOpcode.GUEST_LOGIN, new GuestLoginHandler());
         registerHandler(RecvOpcode.REGISTER_PIC, new RegisterPicHandler());
         registerHandler(RecvOpcode.CHAR_SELECT_WITH_PIC, new CharSelectedWithPicHandler());
