@@ -35,7 +35,7 @@ import tools.PacketCreator;
 public class SetGenderHandler extends AbstractPacketHandler {
     @Override
     public void handlePacket(InPacket p, Client c) {
-        if (c.getGender() == 10) { //Packet shouldn't come if Gender isn't 10.
+        if (c.getGender() == Client.NO_GENDER) { //Packet shouldn't come if Gender isn't 10.
             byte confirmed = p.readByte();
             if (confirmed == 0x01) {
                 c.setGender(p.readByte());

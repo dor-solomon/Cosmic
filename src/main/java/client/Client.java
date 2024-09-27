@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package client;
 
 import config.YamlConfig;
+import database.account.Account;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -63,6 +64,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -72,6 +74,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
@@ -83,6 +86,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(Client.class);
     private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
     private static final int MAX_CHR_SLOTS = 15;
+
+    public static final byte NO_GENDER = 10;
 
     public static final int LOGIN_NOTLOGGEDIN = 0;
     public static final int LOGIN_SERVER_TRANSITION = 1;
@@ -97,12 +102,13 @@ public class Client extends ChannelInboundHandlerAdapter {
     private volatile boolean inTransition;
 
     private io.netty.channel.Channel ioChannel;
+    private Account account;
     private Character player;
     private int channel = 1;
     private int accId = -4;
     private boolean loggedIn = false;
     private boolean serverTransition = false;
-    private Calendar birthday = null;
+    private Calendar birthday = null; // TODO: convert to LocalDate
     private String accountName = null;
     private int world;
     private volatile long lastPong;
@@ -281,6 +287,25 @@ public class Client extends ChannelInboundHandlerAdapter {
         return getChannelServer().getEventSM().getEventManager(event);
     }
 
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        Objects.requireNonNull(account);
+        this.account = account;
+        this.accId = account.id();
+        this.accountName = account.name();
+        this.characterSlots = account.chrSlots();
+        this.pin = account.pin();
+        this.pic = account.pic();
+        this.gender = Objects.requireNonNullElse(account.gender(), NO_GENDER);
+        Calendar calendar = Calendar.getInstance();
+        LocalDate birthdate = account.birthdate();
+        calendar.set(birthdate.getYear(), birthdate.getMonthValue() - 1, birthdate.getDayOfMonth());
+        this.birthday = calendar;
+    }
+
     public Character getPlayer() {
         return player;
     }
@@ -301,6 +326,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return serverTransition;
     }
 
+    // TODO: load ipbans on server start and query it on demand. This query should not be run on every login!
+    @Deprecated
     public boolean hasBannedIP() {
         boolean ret = false;
         try (Connection con = DatabaseConnection.getConnection();
@@ -342,6 +369,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return ret;
     }
 
+    // TODO: load macbans on server start and query it on demand. This query should not be run on every login!
+    @Deprecated
     public boolean hasBannedMac() {
         if (macs.isEmpty()) {
             return false;
@@ -377,6 +406,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     // TODO: Recode to close statements...
+    // Only used from ban command.
     private void loadMacsIfNescessary() throws SQLException {
         if (macs.isEmpty()) {
             try (Connection con = DatabaseConnection.getConnection();
@@ -493,14 +523,20 @@ public class Client extends ChannelInboundHandlerAdapter {
         return false;
     }
 
-    public int login(String login, String pwd, Hwid hwid) {
-        int loginok = 5;
-
+    public boolean tryLogin() {
         if (++loginattempt >= MAX_FAILED_LOGIN_ATTEMPTS) {
             loggedIn = false;
             SessionCoordinator.getInstance().closeSession(this, false);
-            return 6;   // thanks Survival_Project for finding out an issue with AUTOMATIC_REGISTER here
+            return false;
         }
+
+        return true;
+    }
+
+    // TODO: load account outside in LoginPasswordHandler (from service).
+    //
+    public int login(String login, String pwd, Hwid hwid) {
+        int loginok = 5;
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos FROM accounts WHERE name = ?")) {
@@ -576,6 +612,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
+    // TODO: check tempban directly on loaded account
+    @Deprecated
     public Calendar getTempBanCalendarFromDB() {
         final Calendar lTempban = Calendar.getInstance();
 
@@ -675,6 +713,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
+    // TODO: move to LoginPasswordHandler
     public int getLoginState() {  // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
         try (Connection con = DatabaseConnection.getConnection()) {
             int state;
@@ -952,6 +991,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     public void setGender(byte m) {
         this.gender = m;
 
+        // TODO: move to AccountService
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE accounts SET gender = ? WHERE id = ?")) {
             ps.setByte(1, gender);

@@ -15,9 +15,24 @@ public class AccountRepository {
         this.connection = connection;
     }
 
+    public Optional<Account> findByNameIgnoreCase(String name) {
+        String sql = """
+                SELECT id, name, password, pin, pic, birthdate, gender, tos_accepted, chr_slots, login_state,
+                    last_login, banned, temp_ban_timestamp
+                FROM account
+                WHERE lower(name) = lower(:name)""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createQuery(sql)
+                    .bind("name", name)
+                    .mapTo(Account.class)
+                    .findOne();
+        }
+    }
+
     public Optional<Account> findById(int accountId) {
         String sql = """
-                SELECT id, name, password, pin, pic, logged_in, last_login, birthdate, banned, gender, tos_accepted
+                SELECT id, name, password, pin, pic, birthdate, gender, tos_accepted, chr_slots, login_state,
+                    last_login, banned, temp_ban_timestamp
                 FROM account
                 WHERE id = :id""";
         try (Handle handle = connection.getHandle()) {
@@ -30,13 +45,15 @@ public class AccountRepository {
 
     public Integer insert(Account account) {
         String sql = """
-                INSERT INTO account (name, password, birthdate)
-                VALUES (:name, :password, :birthdate)""";
+                INSERT INTO account (name, password, birthdate, chr_slots, login_state)
+                VALUES (:name, :password, :birthdate, :chrSlots, :loginState)""";
         try (Handle handle = connection.getHandle()) {
             return handle.createUpdate(sql)
                     .bind("name", account.name())
                     .bind("password", account.password())
                     .bind("birthdate", account.birthdate())
+                    .bind("chrSlots", account.chrSlots())
+                    .bind("loginState", account.loginState())
                     .executeAndReturnGeneratedKeys("id")
                     .mapTo(Integer.class)
                     .one();

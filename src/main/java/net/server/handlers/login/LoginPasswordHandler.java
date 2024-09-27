@@ -26,10 +26,12 @@ import client.Client;
 import client.DefaultDates;
 import config.YamlConfig;
 import constants.game.GameConstants;
+import database.account.Account;
 import net.PacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
 import net.server.coordinator.session.Hwid;
+import net.server.coordinator.session.SessionCoordinator;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Optional;
 
 public final class LoginPasswordHandler implements PacketHandler {
     private static final Logger log = LoggerFactory.getLogger(LoginPasswordHandler.class);
@@ -64,7 +67,7 @@ public final class LoginPasswordHandler implements PacketHandler {
     }
 
     @Override
-    public final void handlePacket(InPacket p, Client c) {
+    public void handlePacket(InPacket p, Client c) {
         String remoteHost = c.getRemoteAddress();
         if (remoteHost.contentEquals("null")) {
             c.sendPacket(PacketCreator.getLoginFailed(14));          // thanks Alchemist for noting remoteHost could be null
@@ -73,51 +76,94 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         String login = p.readString();
         String pwd = p.readString();
-        c.setAccountName(login);
 
         p.skip(6);   // localhost masked the initial part with zeroes...
         byte[] hwidNibbles = p.readBytes(4);
-        Hwid hwid = new Hwid(HexTool.toCompactHexString(hwidNibbles));
-        int loginok = c.login(login, pwd, hwid);
+        c.setHwid(new Hwid(HexTool.toCompactHexString(hwidNibbles)));
 
-
-        if (YamlConfig.config.server.AUTOMATIC_REGISTER && loginok == 5) {
-            try {
-                int accountId = createAccountPostgres(login, pwd);
-                createAccountMysql(accountId, login, pwd);
-                c.setAccID(accountId);
-            } finally {
-                loginok = c.login(login, pwd, hwid);
+        if (!c.tryLogin()) {
+            return;
+        }
+        Optional<Account> foundAccount = accountService.getAccount(login);
+        if (foundAccount.isEmpty()) {
+            if (YamlConfig.config.server.AUTOMATIC_REGISTER) {
+                Account newAccount = createAccount(login, pwd);
+                foundAccount = Optional.of(newAccount);
+            } else {
+                c.sendPacket(PacketCreator.getLoginFailed(5));
+                return;
             }
         }
 
-        if (c.hasBannedIP() || c.hasBannedMac()) {
+        Account account = foundAccount.get();
+        if (account.banned()) {
+            c.sendPacket(PacketCreator.getLoginFailed(3));
+            // TODO: send ban reason instead of login failed, something like this:
+            // c.sendPacket(PacketCreator.getPermBan(c.getGReason()));
+            return;
+        }
+
+        if (!correctPassword(pwd, account)) {
+            c.sendPacket(PacketCreator.getLoginFailed(4));
+            return;
+        }
+
+        c.setAccount(account);
+
+        if (c.getLoginState() > Client.LOGIN_NOTLOGGEDIN) {
+            c.sendPacket(PacketCreator.getLoginFailed(7));
+            return;
+        }
+
+        if (!account.acceptedTos()) {
+            c.sendPacket(PacketCreator.getLoginFailed(23));
+            return;
+        }
+
+        boolean banCheckDisabled = false;
+        if (!banCheckDisabled && (c.hasBannedIP() || c.hasBannedMac())) {
             c.sendPacket(PacketCreator.getLoginFailed(3));
             return;
         }
-        Calendar tempban = c.getTempBanCalendarFromDB();
-        if (tempban != null) {
+
+        /* TODO: check temp ban from account, something like this:
+        LocalDateTime tempBan = account.tempBanTimestamp();
+        if (tempBan != null && tempBan.isAfter(LocalDateTime.now())) {
+            Duration remainingTempBan = Duration.between(LocalDateTime.now(), tempBan);
+            c.sendPacket(PacketCreator.getTempBan());
+        }
+        */
+        boolean tempBanDisabled = false;
+        Calendar tempban = null;
+        if (!tempBanDisabled && (tempban = c.getTempBanCalendarFromDB()) != null) {
             if (tempban.getTimeInMillis() > Calendar.getInstance().getTimeInMillis()) {
                 c.sendPacket(PacketCreator.getTempBan(tempban.getTimeInMillis(), c.getGReason()));
                 return;
             }
         }
-        if (loginok == 3) {
-            c.sendPacket(PacketCreator.getPermBan(c.getGReason()));//crashes but idc :D
-            return;
-        } else if (loginok != 0) {
-            c.sendPacket(PacketCreator.getLoginFailed(loginok));
+
+        Integer failureCode = checkMultiClient(c);
+        if (failureCode != null) {
+            c.sendPacket(PacketCreator.getLoginFailed(failureCode));
             return;
         }
-        if (c.finishLogin()) {
-            checkChar(c);
-            login(c);
-        } else {
+
+        if (!c.finishLogin()) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
         }
+        checkChar(c);
+
+        c.sendPacket(PacketCreator.getAuthSuccess(c));
+        Server.getInstance().registerLoginState(c);
     }
 
-    private int createAccountPostgres(String name, String password) {
+    private Account createAccount(String name, String password) {
+        Account account = createAccountPostgres(name, password);
+        createAccountMysql(account.id(), name, password);
+        return account;
+    }
+
+    private Account createAccountPostgres(String name, String password) {
         return accountService.createNew(name, password);
     }
 
@@ -126,13 +172,31 @@ public final class LoginPasswordHandler implements PacketHandler {
              PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (id, name, password, birthday, tempban) VALUES (?, ?, ?, ?, ?);")) {
             ps.setInt(1, id);
             ps.setString(2, name);
-            ps.setString(3, BCrypt.hashpw(password, BCrypt.gensalt(12)));
+            ps.setString(3, BCrypt.hashpw(password, BCrypt.gensalt()));
             ps.setDate(4, Date.valueOf(DefaultDates.getBirthday()));
             ps.setTimestamp(5, Timestamp.valueOf(DefaultDates.getTempban()));
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean correctPassword(String input, Account account) {
+        return BCrypt.checkpw(input, account.password());
+    }
+
+    private Integer checkMultiClient(Client c) {
+        SessionCoordinator.AntiMulticlientResult res = SessionCoordinator.getInstance()
+                .attemptLoginSession(c, c.getHwid(), c.getAccID(), false);
+
+        return switch (res) {
+            case SUCCESS -> null;
+            case REMOTE_LOGGEDIN -> 17;
+            case REMOTE_REACHED_LIMIT -> 13;
+            case REMOTE_PROCESSING -> 10;
+            case MANY_ACCOUNT_ATTEMPTS -> 16;
+            default -> 8;
+        };
     }
 
     private void checkChar(Client c) { // issue with multiple chars from same account login found by shavit, resinate
@@ -150,10 +214,5 @@ public final class LoginPasswordHandler implements PacketHandler {
                 }
             }
         }
-    }
-
-    private static void login(Client c) {
-        c.sendPacket(PacketCreator.getAuthSuccess(c));//why the fk did I do c.getAccountName()?
-        Server.getInstance().registerLoginState(c);
     }
 }

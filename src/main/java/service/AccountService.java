@@ -19,8 +19,8 @@ import java.util.Optional;
  */
 @Slf4j
 public class AccountService {
-    private static final int PASSWORD_HASH_SALT_LOG_ROUNDS = 12;
     private static final LocalDate GMS_RELEASE = LocalDate.of(2005, 5, 11);
+    private static final byte INITIAL_CHR_SLOTS = 3;
 
     private final AccountRepository accountRepository;
 
@@ -28,27 +28,34 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
-    public int createNew(String name, String password) {
+    public Account createNew(String name, String password) {
         Account newAccount = Account.builder()
                 .name(name)
                 .password(hashPassword(password))
                 .birthdate(GMS_RELEASE)
+                .chrSlots(INITIAL_CHR_SLOTS)
+                .loginState((byte) Client.LOGIN_NOTLOGGEDIN)
+                .gender(null)
                 .build();
 
         Integer accountId;
         try {
             accountId = accountRepository.insert(newAccount);
         } catch (Exception e) {
-            log.error("Failed to create new account", e);
-            throw new RuntimeException("Failed to create new account");
+            log.error("Failed to insert new account", e);
+            throw new RuntimeException("Failed to insert new account");
         }
 
-        return Optional.ofNullable(accountId)
-                .orElseThrow(() -> new RuntimeException("Failed to create new account - missing id"));
+        return getAccount(accountId)
+                .orElseThrow(() -> new RuntimeException("Failed to get account after insert, id: " + accountId));
     }
 
     private String hashPassword(String password) {
-        return BCrypt.hashpw(password, BCrypt.gensalt(PASSWORD_HASH_SALT_LOG_ROUNDS));
+        return BCrypt.hashpw(password, BCrypt.gensalt());
+    }
+
+    public Optional<Account> getAccount(String name) {
+        return accountRepository.findByNameIgnoreCase(name);
     }
 
     public Optional<Account> getAccount(int accountId) {
