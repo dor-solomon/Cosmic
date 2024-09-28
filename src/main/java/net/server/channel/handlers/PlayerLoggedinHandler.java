@@ -39,6 +39,7 @@ import client.inventory.Pet;
 import client.keybind.KeyBinding;
 import config.YamlConfig;
 import constants.game.GameConstants;
+import database.account.Account;
 import database.character.CharacterLoader;
 import model.CharacterIdentity;
 import net.AbstractPacketHandler;
@@ -61,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.life.MobSkill;
+import service.AccountService;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
@@ -86,10 +88,12 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
     private static final Set<Integer> attemptingLoginAccounts = new HashSet<>();
 
     private final CharacterLoader chrLoader;
+    private final AccountService accountService;
     private final NoteService noteService;
 
-    public PlayerLoggedinHandler(CharacterLoader chrLoader, NoteService noteService) {
+    public PlayerLoggedinHandler(CharacterLoader chrLoader, AccountService accountService, NoteService noteService) {
         this.chrLoader = chrLoader;
+        this.accountService = accountService;
         this.noteService = noteService;
     }
 
@@ -159,65 +163,54 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 throw new GameViolationException("Attempt to enter game without chr id in transition");
             }
 
-            boolean newcomer = false;
+            boolean newlyLoggedIn = false;
             if (player == null) {
                 Optional<Character> loadedChr = chrLoader.loadForChannel(chrId, c);
                 if (loadedChr.isPresent()) {
                     player = loadedChr.get();
-                    newcomer = true;
+                    newlyLoggedIn = true;
                 } else {
                     throw new GameViolationException("Unable to load chr");
                 }
             }
             c.setPlayer(player);
-            c.setAccID(player.getAccountID());
 
-            boolean allowLogin = true;
+            Optional<Account> foundAccount = accountService.getAccount(player.getAccountID());
+            if (foundAccount.isEmpty()) {
+                c.sendPacket(PacketCreator.getAfterLoginError(5));
+                return;
+            }
+            Account account = foundAccount.get();
+            c.setAccount(account);
 
-                /*  is this check really necessary?
-                if (state == LoginState.SERVER_TRANSITION || state == LoginState.NOT_LOGGED_IN) {
-                    List<String> charNames = c.loadCharacterNames(c.getWorld());
-                    if(!newcomer) {
-                        charNames.remove(player.getName());
-                    }
-
-                    for (String charName : charNames) {
-                        if(wserv.getPlayerStorage().getCharacterByName(charName) != null) {
-                            allowLogin = false;
-                            break;
-                        }
-                    }
-                }
-                */
-
-            int accId = c.getAccID();
-            if (tryAcquireAccount(accId)) { // Sync this to prevent wrong login state for double loggedin handling
-                try {
-                    int state = c.getLoginState();
-                    if (state != LoginState.SERVER_TRANSITION || !allowLogin) {
-                        c.setPlayer(null);
-                        c.setAccID(0);
-
-                        if (state == LoginState.LOGGED_IN) {
-                            throw new GameViolationException("Attempt to log in when already logged in");
-                        } else {
-                            c.sendPacket(PacketCreator.getAfterLoginError(7));
-                        }
-
-                        return;
-                    }
-                    c.updateLoginState(LoginState.LOGGED_IN);
-                } finally {
-                    releaseAccount(accId);
-                }
-            } else {
+            int accId = account.id();
+            if (!tryAcquireAccount(accId)) { // Sync this to prevent wrong login state for double loggedin handling
                 c.setPlayer(null);
                 c.setAccID(0);
                 c.sendPacket(PacketCreator.getAfterLoginError(10));
                 return;
             }
 
-            if (!newcomer) {
+            try {
+                int state = c.getLoginState(account);
+                if (state != LoginState.SERVER_TRANSITION) {
+                    c.setPlayer(null);
+                    c.setAccID(0);
+
+                    if (state == LoginState.LOGGED_IN) {
+                        throw new GameViolationException("Attempt to log in when already logged in");
+                    } else {
+                        c.sendPacket(PacketCreator.getAfterLoginError(7));
+                    }
+
+                    return;
+                }
+                c.updateLoginState(LoginState.LOGGED_IN);
+            } finally {
+                releaseAccount(accId);
+            }
+
+            if (!newlyLoggedIn) {
                 c.setCharacterSlots((byte) player.getClient().getCharacterSlots());
                 player.newClient(c);
             }
@@ -315,7 +308,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                             c.sendPacket(GuildPackets.updateAllianceInfo(newAlliance, c.getWorld()));
                             c.sendPacket(GuildPackets.allianceNotice(newAlliance.getId(), newAlliance.getNotice()));
 
-                            if (newcomer) {
+                            if (newlyLoggedIn) {
                                 server.allianceMessage(allianceId, GuildPackets.allianceMemberOnline(player, true), player.getId(), -1);
                             }
                         }
@@ -361,7 +354,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             player.changeSkillLevel(SkillFactory.getSkill(10000000 * player.getJobType() + 12), (byte) (player.getLinkedLevel() / 10), 20, -1);
             player.checkBerserk(player.isHidden());
 
-            if (newcomer) {
+            if (newlyLoggedIn) {
                 for (Pet pet : player.getPets()) {
                     if (pet != null) {
                         wserv.registerPetHunger(player, player.getPetIndex(pet));
@@ -423,7 +416,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 }
             }
 
-            if (newcomer) {
+            if (newlyLoggedIn) {
                 EventInstanceManager eim = EventRecallCoordinator.getInstance().recallEventInstance(chrId);
                 if (eim != null) {
                     eim.registerPlayer(player);
@@ -443,7 +436,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 c.sendPacket(PacketCreator.setNPCScriptable(npcsIds));
             }
 
-            if (newcomer) {
+            if (newlyLoggedIn) {
                 player.setLoginTime(System.currentTimeMillis());
             }
         } catch (Exception e) {

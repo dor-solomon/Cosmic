@@ -119,7 +119,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private boolean disconnecting = false;
     private final Semaphore actionsSemaphore = new Semaphore(7);
     private final Lock lock = new ReentrantLock(true);
-    private final Lock encoderLock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
     // thanks Masterrulax & try2hack for pointing out a bottleneck issue with shared locks, shavit for noticing an opportunity for improvement
     private Calendar tempBanCalendar;
@@ -453,21 +452,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public boolean finishLogin() {
-        encoderLock.lock();
-        try {
-            if (getLoginState() > LoginState.NOT_LOGGED_IN) { // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
-                loggedIn = false;
-                return false;
-            }
-            updateLoginState(LoginState.LOGGED_IN);
-        } finally {
-            encoderLock.unlock();
-        }
-
-        return true;
-    }
-
     public void setPin(String pin) {
         this.pin = pin;
     }
@@ -755,6 +739,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
+    // TODO: move to postgres. Called from all CharSelect handlers (6 in total).
+    //
     public void setCharacterOnSessionTransitionState(int cid) {
         this.updateLoginState(LoginState.SERVER_TRANSITION);
         this.inTransition = true;
@@ -832,7 +818,6 @@ public class Client extends ChannelInboundHandlerAdapter {
                 if (lastPong < pingedAt) {
                     if (ioChannel.isActive()) {
                         log.info("Disconnected {} due to idling. Reason: {}", remoteAddress, event.state());
-                        updateLoginState(LoginState.NOT_LOGGED_IN);
                         disconnectSession();
                     }
                 }

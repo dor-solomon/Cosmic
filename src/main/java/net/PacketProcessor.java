@@ -318,7 +318,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.ITEM_MOVE, new ItemMoveHandler());
         registerHandler(RecvOpcode.MESO_DROP, new MesoDropHandler());
         registerHandler(RecvOpcode.PLAYER_LOGGEDIN, new PlayerLoggedinHandler(channelDeps.characterLoader(),
-                channelDeps.noteService()));
+                channelDeps.accountService(), channelDeps.noteService()));
         registerHandler(RecvOpcode.CHANGE_MAP, new ChangeMapHandler());
         registerHandler(RecvOpcode.MOVE_LIFE, new MoveLifeHandler());
         registerHandler(RecvOpcode.CLOSE_RANGE_ATTACK, new CloseRangeDamageHandler(channelDeps.dropProvider(), channelDeps.banService()));

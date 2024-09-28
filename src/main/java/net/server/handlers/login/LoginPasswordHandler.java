@@ -149,10 +149,10 @@ public final class LoginPasswordHandler implements PacketHandler {
             return;
         }
 
-        if (!c.finishLogin()) {
+        if (!accountService.logIn(c)) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
         }
-        checkChar(c);
+        removeOnlineAccountChrs(c);
 
         c.sendPacket(PacketCreator.getAuthSuccess(c));
         Server.getInstance().registerLoginState(c);
@@ -200,7 +200,7 @@ public final class LoginPasswordHandler implements PacketHandler {
         };
     }
 
-    private void checkChar(Client c) { // issue with multiple chars from same account login found by shavit, resinate
+    private void removeOnlineAccountChrs(Client c) { // issue with multiple chars from same account login found by shavit, resinate
         if (!YamlConfig.config.server.USE_CHARACTER_ACCOUNT_CHECK) {
             return;
         }

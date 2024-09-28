@@ -213,6 +213,18 @@ public class AccountService {
         return accountRepository.setChrSlots(accountId, chrSlots);
     }
 
+    public boolean logIn(Client c) {
+        byte newState = LoginState.LOGGED_IN;
+        if (c.getLoginState() != LoginState.NOT_LOGGED_IN) {
+            return false;
+        }
+
+        setLoginStateMysql(c.getAccID(), newState);
+        setLoginStatePostgres(c.getAccID(), newState);
+        c.setLoginState(newState);
+        return true;
+    }
+
     public void logOut(Client c) {
         SessionCoordinator.getInstance().closeSession(c, false);
         byte newState = LoginState.NOT_LOGGED_IN;
