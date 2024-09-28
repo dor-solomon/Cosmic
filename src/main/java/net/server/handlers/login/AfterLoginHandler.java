@@ -22,6 +22,7 @@
 package net.server.handlers.login;
 
 import client.Client;
+import client.LoginState;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.coordinator.session.SessionCoordinator;
@@ -58,7 +59,7 @@ public final class AfterLoginHandler extends AbstractPacketHandler {
             }
         } else if (c2 == 0 && c3 == 5) {
             SessionCoordinator.getInstance().closeSession(c, false);
-            c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+            c.updateLoginState(LoginState.NOT_LOGGED_IN);
         }
     }
 }

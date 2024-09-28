@@ -28,6 +28,7 @@ import client.Client;
 import client.Disease;
 import client.Family;
 import client.FamilyEntry;
+import client.LoginState;
 import client.Mount;
 import client.SkillFactory;
 import client.inventory.Equip;
@@ -174,7 +175,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             boolean allowLogin = true;
 
                 /*  is this check really necessary?
-                if (state == Client.LOGIN_SERVER_TRANSITION || state == Client.LOGIN_NOTLOGGEDIN) {
+                if (state == LoginState.SERVER_TRANSITION || state == LoginState.NOT_LOGGED_IN) {
                     List<String> charNames = c.loadCharacterNames(c.getWorld());
                     if(!newcomer) {
                         charNames.remove(player.getName());
@@ -193,11 +194,11 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             if (tryAcquireAccount(accId)) { // Sync this to prevent wrong login state for double loggedin handling
                 try {
                     int state = c.getLoginState();
-                    if (state != Client.LOGIN_SERVER_TRANSITION || !allowLogin) {
+                    if (state != LoginState.SERVER_TRANSITION || !allowLogin) {
                         c.setPlayer(null);
                         c.setAccID(0);
 
-                        if (state == Client.LOGIN_LOGGEDIN) {
+                        if (state == LoginState.LOGGED_IN) {
                             throw new GameViolationException("Attempt to log in when already logged in");
                         } else {
                             c.sendPacket(PacketCreator.getAfterLoginError(7));
@@ -205,7 +206,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 
                         return;
                     }
-                    c.updateLoginState(Client.LOGIN_LOGGEDIN);
+                    c.updateLoginState(LoginState.LOGGED_IN);
                 } finally {
                     releaseAccount(accId);
                 }

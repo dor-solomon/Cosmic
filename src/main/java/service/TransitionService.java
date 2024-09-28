@@ -2,6 +2,7 @@ package service;
 
 import client.BuddyList;
 import client.Client;
+import client.LoginState;
 import client.inventory.InventoryType;
 import config.YamlConfig;
 import constants.id.MapId;
@@ -171,11 +172,11 @@ public class TransitionService {
 
 
         if (!c.isInTransition() && c.isLoggedIn()) {
-            c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+            c.updateLoginState(LoginState.NOT_LOGGED_IN);
             c.clear();
         } else {
             if (!Server.getInstance().hasCharacteridInTransition(c)) {
-                c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+                c.updateLoginState(LoginState.NOT_LOGGED_IN);
             }
 
             c.clearEngines();

@@ -24,6 +24,7 @@ package net.server.handlers.login;
 import client.Character;
 import client.Client;
 import client.DefaultDates;
+import client.LoginState;
 import config.YamlConfig;
 import constants.game.GameConstants;
 import database.account.Account;
@@ -110,7 +111,7 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         c.setAccount(account);
 
-        if (c.getLoginState(account) > Client.LOGIN_NOTLOGGEDIN) {
+        if (c.getLoginState(account) > LoginState.NOT_LOGGED_IN) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
             return;
         }

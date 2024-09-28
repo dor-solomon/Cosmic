@@ -24,6 +24,7 @@ package net.server.handlers.login;
 
 import client.Client;
 import client.Gender;
+import client.LoginState;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
@@ -73,7 +74,7 @@ public class SetGenderHandler extends AbstractPacketHandler {
 
     private void close(Client c) {
         SessionCoordinator.getInstance().closeSession(c, false);
-        c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+        c.updateLoginState(LoginState.NOT_LOGGED_IN);
     }
 
 }

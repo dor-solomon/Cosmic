@@ -22,6 +22,7 @@
 package net.server.handlers.login;
 
 import client.Client;
+import client.LoginState;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.coordinator.session.SessionCoordinator;
@@ -44,7 +45,7 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
         boolean cancel = p.readByte() == 0;
         if (cancel) {
             SessionCoordinator.getInstance().closeSession(c, false);
-            c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+            c.updateLoginState(LoginState.NOT_LOGGED_IN);
             return;
         }
 
@@ -54,6 +55,6 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
         c.sendPacket(PacketCreator.pinRegistered());
 
         SessionCoordinator.getInstance().closeSession(c, false);
-        c.updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+        c.updateLoginState(LoginState.NOT_LOGGED_IN);
     }
 }

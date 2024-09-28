@@ -86,10 +86,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
     private static final int MAX_CHR_SLOTS = 15;
 
-    public static final int LOGIN_NOTLOGGEDIN = 0;
-    public static final int LOGIN_SERVER_TRANSITION = 1;
-    public static final int LOGIN_LOGGEDIN = 2;
-
     private final Type type;
     private final long sessionId;
     private final PacketProcessor packetProcessor;
@@ -460,11 +456,11 @@ public class Client extends ChannelInboundHandlerAdapter {
     public boolean finishLogin() {
         encoderLock.lock();
         try {
-            if (getLoginState() > LOGIN_NOTLOGGEDIN) { // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
+            if (getLoginState() > LoginState.NOT_LOGGED_IN) { // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
                 loggedIn = false;
                 return false;
             }
-            updateLoginState(Client.LOGIN_LOGGEDIN);
+            updateLoginState(LoginState.LOGGED_IN);
         } finally {
             encoderLock.unlock();
         }
@@ -621,7 +617,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             e.printStackTrace();
         }
 
-        if (newState == LOGIN_NOTLOGGEDIN) {
+        if (newState == LoginState.NOT_LOGGED_IN) {
             loggedIn = false;
             serverTransition = false;
             setAccID(0);
@@ -682,19 +678,19 @@ public class Client extends ChannelInboundHandlerAdapter {
                     }
 
                     state = rs.getInt("loggedin");
-                    if (state == LOGIN_SERVER_TRANSITION) {
+                    if (state == LoginState.SERVER_TRANSITION) {
                         if (rs.getTimestamp("lastlogin").getTime() + 30000 < Server.getInstance().getCurrentTime()) {
                             int accountId = accId;
-                            state = LOGIN_NOTLOGGEDIN;
-                            updateLoginState(Client.LOGIN_NOTLOGGEDIN);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa
+                            state = LoginState.NOT_LOGGED_IN;
+                            updateLoginState(LoginState.NOT_LOGGED_IN);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa
                             this.setAccID(accountId);
                         }
                     }
                 }
             }
-            if (state == LOGIN_LOGGEDIN) {
+            if (state == LoginState.LOGGED_IN) {
                 loggedIn = true;
-            } else if (state == LOGIN_SERVER_TRANSITION) {
+            } else if (state == LoginState.SERVER_TRANSITION) {
                 try (PreparedStatement ps2 = con.prepareStatement("UPDATE accounts SET loggedin = 0 WHERE id = ?")) {
                     ps2.setInt(1, getAccID());
                     ps2.executeUpdate();
@@ -746,7 +742,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void setCharacterOnSessionTransitionState(int cid) {
-        this.updateLoginState(Client.LOGIN_SERVER_TRANSITION);
+        this.updateLoginState(LoginState.SERVER_TRANSITION);
         this.inTransition = true;
         Server.getInstance().setCharacteridInTransition(this, cid);
     }
@@ -822,7 +818,7 @@ public class Client extends ChannelInboundHandlerAdapter {
                 if (lastPong < pingedAt) {
                     if (ioChannel.isActive()) {
                         log.info("Disconnected {} due to idling. Reason: {}", remoteAddress, event.state());
-                        updateLoginState(Client.LOGIN_NOTLOGGEDIN);
+                        updateLoginState(LoginState.NOT_LOGGED_IN);
                         disconnectSession();
                     }
                 }
