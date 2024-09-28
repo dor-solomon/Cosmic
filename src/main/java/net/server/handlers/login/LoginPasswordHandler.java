@@ -110,7 +110,7 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         c.setAccount(account);
 
-        if (c.getLoginState() > Client.LOGIN_NOTLOGGEDIN) {
+        if (c.getLoginState(account) > Client.LOGIN_NOTLOGGEDIN) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
             return;
         }

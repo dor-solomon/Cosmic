@@ -40,7 +40,6 @@ import net.server.channel.Channel;
 import net.server.coordinator.login.LoginBypassCoordinator;
 import net.server.coordinator.session.Hwid;
 import net.server.coordinator.session.SessionCoordinator;
-import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import net.server.world.Party;
 import net.server.world.World;
 import org.slf4j.Logger;
@@ -53,7 +52,6 @@ import scripting.quest.QuestActionManager;
 import scripting.quest.QuestScriptManager;
 import server.TimerManager;
 import server.life.Monster;
-import tools.BCrypt;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 
@@ -65,6 +63,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -110,7 +109,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private String accountName = null;
     private int world;
     private volatile long lastPong;
-    private int gmlevel;
+    private int gmlevel; // TODO: remove? There's a gmlevel in Character too.
     private Set<String> macs = new HashSet<>();
     private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
@@ -531,85 +530,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return true;
     }
 
-    // TODO: load account outside in LoginPasswordHandler (from service).
-    //
-    public int login(String login, String pwd, Hwid hwid) {
-        int loginok = 5;
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT id, password, gender, banned, pin, pic, characterslots, tos FROM accounts WHERE name = ?")) {
-            ps.setString(1, login);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                accId = -2;
-                if (rs.next()) {
-                    accId = rs.getInt("id");
-                    if (accId <= 0) {
-                        log.warn("Tried to log in with accId {}", accId);
-                        return 15;
-                    }
-
-                    boolean banned = (rs.getByte("banned") == 1);
-                    gmlevel = 0;
-                    pin = rs.getString("pin");
-                    pic = rs.getString("pic");
-                    gender = rs.getByte("gender");
-                    characterSlots = rs.getByte("characterslots");
-                    String passhash = rs.getString("password");
-                    byte tos = rs.getByte("tos");
-
-                    if (banned) {
-                        return 3;
-                    }
-
-                    if (getLoginState() > LOGIN_NOTLOGGEDIN) { // already loggedin
-                        loggedIn = false;
-                        loginok = 7;
-                    } else if (BCrypt.checkpw(pwd, passhash)) {
-                        loginok = (tos == 0) ? 23 : 0;
-                    } else {
-                        loggedIn = false;
-                        loginok = 4;
-                    }
-                } else {
-                    accId = -3;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        if (loginok == 0 || loginok == 4) {
-            AntiMulticlientResult res = SessionCoordinator.getInstance().attemptLoginSession(this, hwid, accId, loginok == 4);
-
-            switch (res) {
-                case SUCCESS:
-                    if (loginok == 0) {
-                        loginattempt = 0;
-                    }
-
-                    return loginok;
-
-                case REMOTE_LOGGEDIN:
-                    return 17;
-
-                case REMOTE_REACHED_LIMIT:
-                    return 13;
-
-                case REMOTE_PROCESSING:
-                    return 10;
-
-                case MANY_ACCOUNT_ATTEMPTS:
-                    return 16;
-
-                default:
-                    return 8;
-            }
-        } else {
-            return loginok;
-        }
-    }
-
     // TODO: check tempban directly on loaded account
     @Deprecated
     public Calendar getTempBanCalendarFromDB() {
@@ -705,10 +625,42 @@ public class Client extends ChannelInboundHandlerAdapter {
             loggedIn = false;
             serverTransition = false;
             setAccID(0);
+        } else if (newState == LoginState.SERVER_TRANSITION) {
+            loggedIn = false;
+            serverTransition = true;
         } else {
-            serverTransition = (newState == LOGIN_SERVER_TRANSITION);
-            loggedIn = !serverTransition;
+            loggedIn = true;
+            serverTransition = false;
         }
+    }
+
+    public byte getLoginState(Account account) {
+        byte loginState = account.loginState();
+        if (loginState == LoginState.SERVER_TRANSITION && lastLoginOverThirtySecondsAgo(account)) {
+            loginState = LoginState.NOT_LOGGED_IN;
+            updateLoginState(LoginState.NOT_LOGGED_IN);
+        }
+
+        if (loginState == LoginState.LOGGED_IN) {
+            loggedIn = true;
+        } else if (loginState == LoginState.SERVER_TRANSITION) {
+            try (Connection con = DatabaseConnection.getConnection();
+                 PreparedStatement ps2 = con.prepareStatement("UPDATE accounts SET loggedin = 0 WHERE id = ?")) {
+                ps2.setInt(1, getAccID());
+                ps2.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return loginState;
+    }
+
+    private static boolean lastLoginOverThirtySecondsAgo(Account account) {
+        if (account.lastLogin() == null) {
+            return true;
+        }
+
+        return account.lastLogin().isBefore(LocalDateTime.now().minusSeconds(30));
     }
 
     // TODO: move to LoginPasswordHandler
