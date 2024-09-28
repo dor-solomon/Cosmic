@@ -1,9 +1,12 @@
 package service;
 
 import client.Client;
+import client.LoginState;
 import database.account.Account;
 import database.account.AccountRepository;
 import lombok.extern.slf4j.Slf4j;
+import net.server.Server;
+import net.server.coordinator.session.SessionCoordinator;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 
@@ -11,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -34,7 +38,7 @@ public class AccountService {
                 .password(hashPassword(password))
                 .birthdate(GMS_RELEASE)
                 .chrSlots(INITIAL_CHR_SLOTS)
-                .loginState((byte) Client.LOGIN_NOTLOGGEDIN)
+                .loginState(LoginState.NOT_LOGGED_IN)
                 .gender(null)
                 .build();
 
@@ -207,6 +211,37 @@ public class AccountService {
 
     private boolean setChrSlotsPostgres(int accountId, int chrSlots) {
         return accountRepository.setChrSlots(accountId, chrSlots);
+    }
+
+    public void logOut(Client c) {
+        SessionCoordinator.getInstance().closeSession(c, false);
+        byte newState = LoginState.NOT_LOGGED_IN;
+        int accountId = c.getAccID();
+        setLoginStateMysql(accountId, newState);
+        setLoginStatePostgres(accountId, newState);
+        c.setLoginState(newState);
+    }
+
+    private void setLoginStateMysql(int accountId, byte newState) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = ?, lastlogin = ? WHERE id = ?")) {
+            // using sql currenttime here could potentially break the login, thanks Arnah for pointing this out
+
+            ps.setInt(1, newState);
+            ps.setTimestamp(2, new java.sql.Timestamp(Server.getInstance().getCurrentTime()));
+            ps.setInt(3, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setLoginStatePostgres(int accountId, byte newState) {
+        Instant loginTime = Instant.now();
+        boolean success = accountRepository.setLoginState(accountId, newState, loginTime);
+        if (!success) {
+            log.warn("Failed to set login state - account:{}, newState:{}, loginTime:{}", accountId, newState, loginTime);
+        }
     }
 
 }

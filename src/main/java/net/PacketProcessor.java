@@ -277,7 +277,7 @@ public final class PacketProcessor {
 
     private void registerLoginHandlers() {
         registerHandler(RecvOpcode.ACCEPT_TOS, new AcceptToSHandler(channelDeps.accountService()));
-        registerHandler(RecvOpcode.AFTER_LOGIN, new AfterLoginHandler());
+        registerHandler(RecvOpcode.AFTER_LOGIN, new AfterLoginHandler(channelDeps.accountService()));
         registerHandler(RecvOpcode.SERVERLIST_REREQUEST, new ServerlistRequestHandler());
         registerHandler(RecvOpcode.CHARLIST_REQUEST, new CharlistRequestHandler());
         registerHandler(RecvOpcode.CHAR_SELECT, new CharSelectedHandler());

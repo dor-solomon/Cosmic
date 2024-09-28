@@ -3,6 +3,7 @@ package database.account;
 import database.PgDatabaseConnection;
 import org.jdbi.v3.core.Handle;
 
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -121,6 +122,20 @@ public class AccountRepository {
             return handle.createUpdate(sql)
                     .bind("id", accountId)
                     .bind("chrSlots", chrSlots)
+                    .execute() > 0;
+        }
+    }
+
+    public boolean setLoginState(int accountId, byte loginState, Instant lastLogin) {
+        String sql = """
+                UPDATE account
+                SET login_state = :loginState, last_login = :lastLogin
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("loginState", loginState)
+                    .bind("lastLogin", lastLogin)
                     .execute() > 0;
         }
     }

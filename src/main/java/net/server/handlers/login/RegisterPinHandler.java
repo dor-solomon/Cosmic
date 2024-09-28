@@ -22,10 +22,8 @@
 package net.server.handlers.login;
 
 import client.Client;
-import client.LoginState;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
-import net.server.coordinator.session.SessionCoordinator;
 import service.AccountService;
 import tools.PacketCreator;
 
@@ -44,8 +42,7 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
     public void handlePacket(InPacket p, Client c) {
         boolean cancel = p.readByte() == 0;
         if (cancel) {
-            SessionCoordinator.getInstance().closeSession(c, false);
-            c.updateLoginState(LoginState.NOT_LOGGED_IN);
+            accountService.logOut(c);
             return;
         }
 
@@ -54,7 +51,6 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
         c.setPin(pin);
         c.sendPacket(PacketCreator.pinRegistered());
 
-        SessionCoordinator.getInstance().closeSession(c, false);
-        c.updateLoginState(LoginState.NOT_LOGGED_IN);
+        accountService.logOut(c);
     }
 }

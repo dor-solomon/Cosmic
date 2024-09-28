@@ -630,6 +630,20 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
+    public void setLoginState(int newState) {
+        if (newState == LoginState.NOT_LOGGED_IN) {
+            loggedIn = false;
+            serverTransition = false;
+            setAccID(0);
+        } else if (newState == LoginState.SERVER_TRANSITION) {
+            loggedIn = false;
+            serverTransition = true;
+        } else {
+            loggedIn = true;
+            serverTransition = false;
+        }
+    }
+
     public byte getLoginState(Account account) {
         byte loginState = account.loginState();
         if (loginState == LoginState.SERVER_TRANSITION && lastLoginOverThirtySecondsAgo(account)) {
