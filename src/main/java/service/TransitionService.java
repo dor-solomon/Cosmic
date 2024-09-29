@@ -34,9 +34,11 @@ public class TransitionService {
     private static final Logger log = LoggerFactory.getLogger(TransitionService.class);
     private final Server server = Server.getInstance();
     private final CharacterSaver chrSaver;
+    private final AccountService accountService;
 
-    public TransitionService(CharacterSaver characterSaver) {
+    public TransitionService(CharacterSaver characterSaver, AccountService accountService) {
         this.chrSaver = characterSaver;
+        this.accountService = accountService;
     }
 
     public void changeChannel(Client c, int channel) {
@@ -88,12 +90,17 @@ public class TransitionService {
 
         chrSaver.save(chr);
 
-        chr.setSessionTransitionState();
+        setInTransition(chr.getClient(), chr.getId());
         try {
             c.sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setInTransition(Client c, int chrId) {
+        accountService.setInTransition(c);
+        Server.getInstance().setCharacteridInTransition(c, chrId);
     }
 
     public void disconnect(final Client c, final boolean shutdown) {

@@ -11,6 +11,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.AccountService;
+import service.TransitionService;
 import tools.PacketCreator;
 import tools.Randomizer;
 
@@ -21,9 +22,11 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ViewAllCharRegisterPicHandler.class);
 
     private final AccountService accountService;
+    private final TransitionService transitionService;
 
-    public ViewAllCharRegisterPicHandler(AccountService accountService) {
+    public ViewAllCharRegisterPicHandler(AccountService accountService, TransitionService transitionService) {
         this.accountService = accountService;
+        this.transitionService = transitionService;
     }
 
     @Override
@@ -85,7 +88,7 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
         }
 
         server.unregisterLoginState(c);
-        c.setCharacterOnSessionTransitionState(charId);
+        transitionService.setInTransition(c, charId);
 
         try {
             c.sendPacket(PacketCreator.getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));

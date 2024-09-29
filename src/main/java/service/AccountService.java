@@ -220,19 +220,27 @@ public class AccountService {
             return false;
         }
 
-        setLoginStateMysql(c.getAccID(), newState);
-        setLoginStatePostgres(c.getAccID(), newState);
-        c.setLoginState(newState);
+        setLoginState(c, newState);
         return true;
     }
 
     public void logOut(Client c) {
         SessionCoordinator.getInstance().closeSession(c, false);
-        byte newState = LoginState.NOT_LOGGED_IN;
-        int accountId = c.getAccID();
+        setLoginState(c, LoginState.NOT_LOGGED_IN);
+    }
+
+    public void setInTransition(Client c) {
+        setLoginState(c, LoginState.SERVER_TRANSITION);
+    }
+
+    private void setLoginState(Client c, byte newState) {
+        saveLoginState(c.getAccID(), newState);
+        c.setLoginState(newState);
+    }
+
+    private void saveLoginState(int accountId, byte newState) {
         setLoginStateMysql(accountId, newState);
         setLoginStatePostgres(accountId, newState);
-        c.setLoginState(newState);
     }
 
     private void setLoginStateMysql(int accountId, byte newState) {

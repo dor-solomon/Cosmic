@@ -280,7 +280,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.AFTER_LOGIN, new AfterLoginHandler(channelDeps.accountService()));
         registerHandler(RecvOpcode.SERVERLIST_REREQUEST, new ServerlistRequestHandler());
         registerHandler(RecvOpcode.CHARLIST_REQUEST, new CharlistRequestHandler());
-        registerHandler(RecvOpcode.CHAR_SELECT, new CharSelectedHandler());
+        registerHandler(RecvOpcode.CHAR_SELECT, new CharSelectedHandler(channelDeps.transitionService()));
         registerHandler(RecvOpcode.LOGIN_PASSWORD, new LoginPasswordHandler(channelDeps.accountService(),
                 channelDeps.transitionService()));
         registerHandler(RecvOpcode.RELOG, new RelogRequestHandler());
@@ -290,15 +290,18 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.CREATE_CHAR, new CreateCharHandler(channelDeps.characterCreator()));
         registerHandler(RecvOpcode.DELETE_CHAR, new DeleteCharHandler());
         registerHandler(RecvOpcode.VIEW_ALL_CHAR, new ViewAllCharHandler());
-        registerHandler(RecvOpcode.PICK_ALL_CHAR, new ViewAllCharSelectedHandler());
+        registerHandler(RecvOpcode.PICK_ALL_CHAR, new ViewAllCharSelectedHandler(channelDeps.transitionService()));
         registerHandler(RecvOpcode.REGISTER_PIN, new RegisterPinHandler(channelDeps.accountService()));
         registerHandler(RecvOpcode.GUEST_LOGIN, new GuestLoginHandler());
-        registerHandler(RecvOpcode.REGISTER_PIC, new RegisterPicHandler(channelDeps.accountService()));
-        registerHandler(RecvOpcode.CHAR_SELECT_WITH_PIC, new CharSelectedWithPicHandler());
+        registerHandler(RecvOpcode.REGISTER_PIC, new RegisterPicHandler(channelDeps.accountService(),
+                channelDeps.transitionService()));
+        registerHandler(RecvOpcode.CHAR_SELECT_WITH_PIC, new CharSelectedWithPicHandler(
+                channelDeps.transitionService()));
         registerHandler(RecvOpcode.SET_GENDER, new SetGenderHandler(channelDeps.accountService()));
-        registerHandler(RecvOpcode.VIEW_ALL_WITH_PIC, new ViewAllCharSelectedWithPicHandler());
+        registerHandler(RecvOpcode.VIEW_ALL_WITH_PIC, new ViewAllCharSelectedWithPicHandler(
+                channelDeps.transitionService()));
         registerHandler(RecvOpcode.VIEW_ALL_PIC_REGISTER, new ViewAllCharRegisterPicHandler(
-                channelDeps.accountService()));
+                channelDeps.accountService(), channelDeps.transitionService()));
     }
 
     private void registerChannelHandlers() {
@@ -319,7 +322,7 @@ public final class PacketProcessor {
         registerHandler(RecvOpcode.MESO_DROP, new MesoDropHandler());
         registerHandler(RecvOpcode.PLAYER_LOGGEDIN, new PlayerLoggedinHandler(channelDeps.characterLoader(),
                 channelDeps.accountService(), channelDeps.noteService()));
-        registerHandler(RecvOpcode.CHANGE_MAP, new ChangeMapHandler());
+        registerHandler(RecvOpcode.CHANGE_MAP, new ChangeMapHandler(channelDeps.transitionService()));
         registerHandler(RecvOpcode.MOVE_LIFE, new MoveLifeHandler());
         registerHandler(RecvOpcode.CLOSE_RANGE_ATTACK, new CloseRangeDamageHandler(channelDeps.dropProvider(), channelDeps.banService()));
         registerHandler(RecvOpcode.RANGED_ATTACK, new RangedAttackHandler(channelDeps.dropProvider(), channelDeps.banService()));

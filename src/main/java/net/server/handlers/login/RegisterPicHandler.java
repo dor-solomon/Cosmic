@@ -11,6 +11,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.AccountService;
+import service.TransitionService;
 import tools.PacketCreator;
 
 import java.net.InetAddress;
@@ -19,10 +20,12 @@ import java.net.UnknownHostException;
 public final class RegisterPicHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(RegisterPicHandler.class);
 
+    private final TransitionService transitionService;
     private final AccountService accountService;
 
-    public RegisterPicHandler(AccountService accountService) {
+    public RegisterPicHandler(AccountService accountService, TransitionService transitionService) {
         this.accountService = accountService;
+        this.transitionService = transitionService;
     }
 
     @Override
@@ -81,7 +84,7 @@ public final class RegisterPicHandler extends AbstractPacketHandler {
             }
 
             server.unregisterLoginState(c);
-            c.setCharacterOnSessionTransitionState(charId);
+            transitionService.setInTransition(c, charId);
 
             try {
                 c.sendPacket(PacketCreator.getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));

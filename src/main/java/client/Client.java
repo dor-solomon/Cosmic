@@ -740,13 +740,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
-    // TODO: move to postgres. Called from all CharSelect handlers (6 in total).
-    //
-    public void setCharacterOnSessionTransitionState(int cid) {
-        this.updateLoginState(LoginState.SERVER_TRANSITION);
-        Server.getInstance().setCharacteridInTransition(this, cid);
-    }
-
     public int getChannel() {
         return channel;
     }

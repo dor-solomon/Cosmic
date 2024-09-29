@@ -824,12 +824,13 @@ public class Server {
         CharacterRepository characterRepository = new CharacterRepository();
         MonsterCardRepository monsterCardRepository = new MonsterCardRepository(connection);
         CharacterSaver characterSaver = new CharacterSaver(connection, characterRepository, monsterCardRepository);
-        TransitionService transitionService = new TransitionService(characterSaver);
+        AccountService accountService = new AccountService(new AccountRepository(connection));
+        TransitionService transitionService = new TransitionService(characterSaver, accountService);
         NoteService noteService = new NoteService(new NoteDao(connection));
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
         ChannelDependencies channelDependencies = ChannelDependencies.builder()
-                .accountService(new AccountService(new AccountRepository(connection)))
+                .accountService(accountService)
                 .characterCreator(new CharacterCreator(connection, characterRepository))
                 .characterLoader(new CharacterLoader(monsterCardRepository))
                 .characterSaver(characterSaver)
@@ -1631,6 +1632,7 @@ public class Server {
         return SessionCoordinator.getSessionRemoteHost(client);
     }
 
+    // Move to TransitionService
     public void setCharacteridInTransition(Client client, int charId) {
         String remoteIp = getRemoteHost(client);
 

@@ -10,6 +10,7 @@ import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import service.TransitionService;
 import tools.PacketCreator;
 import tools.Randomizer;
 
@@ -18,6 +19,12 @@ import java.net.UnknownHostException;
 
 public class ViewAllCharSelectedWithPicHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ViewAllCharSelectedWithPicHandler.class);
+
+    private final TransitionService transitionService;
+
+    public ViewAllCharSelectedWithPicHandler(TransitionService transitionService) {
+        this.transitionService = transitionService;
+    }
 
     private static int parseAntiMulticlientError(AntiMulticlientResult res) {
         return switch (res) {
@@ -86,7 +93,7 @@ public class ViewAllCharSelectedWithPicHandler extends AbstractPacketHandler {
             }
 
             server.unregisterLoginState(c);
-            c.setCharacterOnSessionTransitionState(charId);
+            transitionService.setInTransition(c, charId);
 
             try {
                 c.sendPacket(PacketCreator.getServerIP(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1]), charId));

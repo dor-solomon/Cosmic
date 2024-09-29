@@ -584,10 +584,6 @@ public class Character extends AbstractCharacterObject {
         return disabledPartySearchInvites.contains(fromLeaderid);
     }
 
-    public void setSessionTransitionState() {
-        client.setCharacterOnSessionTransitionState(this.getId());
-    }
-
     public boolean getCS() {
         return useCS;
     }
