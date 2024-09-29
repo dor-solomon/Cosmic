@@ -475,6 +475,7 @@ public final class CashOperationHandler extends AbstractPacketHandler {
         }
     }
 
+    // TODO: move to util class. Method to parse LocalDate from this encoded int.
     public static boolean checkBirthday(Client c, int idate) {
         int year = idate / 10000;
         int month = (idate - year * 10000) / 100;

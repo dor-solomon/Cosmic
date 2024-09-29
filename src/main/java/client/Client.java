@@ -98,7 +98,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int accId = -4;
     private boolean loggedIn = false;
     private boolean inServerTransition = false;
-    private Calendar birthday = null; // TODO: convert to LocalDate
+    private LocalDate birthday = null;
     private String accountName = null;
     private int world;
     private volatile long lastPong;
@@ -289,10 +289,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.pin = account.pin();
         this.pic = account.pic();
         this.gender = Objects.requireNonNullElse(account.gender(), Gender.NOT_SET);
-        Calendar calendar = Calendar.getInstance();
-        LocalDate birthdate = account.birthdate();
-        calendar.set(birthdate.getYear(), birthdate.getMonthValue() - 1, birthdate.getDayOfMonth());
-        this.birthday = calendar;
+        this.birthday = account.birthdate();
         loggedIn = account.loginState() == LoginState.LOGGED_IN;
         inServerTransition = account.loginState() == LoginState.SERVER_TRANSITION;
     }
@@ -568,7 +565,9 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public boolean checkBirthDate(Calendar date) {
-        return date.get(Calendar.YEAR) == birthday.get(Calendar.YEAR) && date.get(Calendar.MONTH) == birthday.get(Calendar.MONTH) && date.get(Calendar.DAY_OF_MONTH) == birthday.get(Calendar.DAY_OF_MONTH);
+        LocalDate toCheck = LocalDate.of(date.get(Calendar.YEAR), date.get(Calendar.MONTH),
+                date.get(Calendar.DAY_OF_MONTH));
+        return Objects.equals(birthday, toCheck);
     }
 
     public synchronized boolean tryDisconnect() {
