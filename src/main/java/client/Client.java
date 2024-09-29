@@ -92,7 +92,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     private Hwid hwid;
     private String remoteAddress;
-    private volatile boolean inTransition;
 
     private io.netty.channel.Channel ioChannel;
     private Account account;
@@ -100,7 +99,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int channel = 1;
     private int accId = -4;
     private boolean loggedIn = false;
-    private boolean serverTransition = false;
+    private boolean inServerTransition = false;
     private Calendar birthday = null; // TODO: convert to LocalDate
     private String accountName = null;
     private int world;
@@ -237,7 +236,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         try {
             // client freeze issues on session transition states found thanks to yolinlin, Omo Oppa, Nozphex
-            if (!inTransition) {
+            if (!inServerTransition) {
                 ctx.fireExceptionCaught(new DisconnectException(this, false));
             }
         } catch (Throwable t) {
@@ -315,7 +314,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public boolean isInTransition() {
-        return serverTransition;
+        return inServerTransition;
     }
 
     // TODO: load ipbans on server start and query it on demand. This query should not be run on every login!
@@ -603,28 +602,28 @@ public class Client extends ChannelInboundHandlerAdapter {
 
         if (newState == LoginState.NOT_LOGGED_IN) {
             loggedIn = false;
-            serverTransition = false;
+            inServerTransition = false;
             setAccID(0);
         } else if (newState == LoginState.SERVER_TRANSITION) {
             loggedIn = false;
-            serverTransition = true;
+            inServerTransition = true;
         } else {
             loggedIn = true;
-            serverTransition = false;
+            inServerTransition = false;
         }
     }
 
     public void setLoginState(int newState) {
         if (newState == LoginState.NOT_LOGGED_IN) {
             loggedIn = false;
-            serverTransition = false;
+            inServerTransition = false;
             setAccID(0);
         } else if (newState == LoginState.SERVER_TRANSITION) {
             loggedIn = false;
-            serverTransition = true;
+            inServerTransition = true;
         } else {
             loggedIn = true;
-            serverTransition = false;
+            inServerTransition = false;
         }
     }
 
@@ -743,7 +742,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     //
     public void setCharacterOnSessionTransitionState(int cid) {
         this.updateLoginState(LoginState.SERVER_TRANSITION);
-        this.inTransition = true;
         Server.getInstance().setCharacteridInTransition(this, cid);
     }
 
