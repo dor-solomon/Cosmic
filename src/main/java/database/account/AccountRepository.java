@@ -45,6 +45,20 @@ public class AccountRepository {
         }
     }
 
+    public Optional<Account> findIdByChrNameIgnoreCase(String name) {
+        String sql = """
+                SELECT id
+                FROM account AS a
+                INNER JOIN chr AS c ON a.id = c.account
+                WHERE lower(c.name) = lower(:name)""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createQuery(sql)
+                    .bind("name", name)
+                    .mapTo(Account.class)
+                    .findOne();
+        }
+    }
+
     public Integer insert(Account account) {
         String sql = """
                 INSERT INTO account (name, password, birthdate, chr_slots, login_state)
@@ -137,6 +151,21 @@ public class AccountRepository {
                     .bind("id", accountId)
                     .bind("loginState", loginState.getValue())
                     .bind("lastLogin", lastLogin)
+                    .execute() > 0;
+        }
+    }
+
+    public boolean setBanned(int accountId, Instant bannedUntil, byte banReason, String description) {
+        String sql = """
+                UPDATE account
+                SET banned = true, banned_until = :bannedUntil, ban_reason = :banReason, description = :description
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("bannedUntil", bannedUntil)
+                    .bind("banReason", banReason)
+                    .bind("description", description)
                     .execute() > 0;
         }
     }

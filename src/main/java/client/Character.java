@@ -327,7 +327,7 @@ public class Character extends AbstractCharacterObject {
     private final List<String> blockedPortals = new ArrayList<>();
     private final Map<Short, String> area_info = new LinkedHashMap<>();
     private AutobanManager autoban;
-    private boolean isbanned = false;
+    private volatile boolean isBanned = false;
     private boolean blockCashShop = false;
     private boolean allowExpGain = true;
     private byte pendantExp = 0, lastmobcount = 0, doorSlot = -1;
@@ -10006,29 +10006,12 @@ public class Character extends AbstractCharacterObject {
         return area_info;
     }
 
-    public void block(int reason, int days, String desc) {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, days);
-        final Timestamp TS = new Timestamp(cal.getTimeInMillis());
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET banreason = ?, tempban = ?, greason = ? WHERE id = ?")) {
-            ps.setString(1, desc);
-            ps.setTimestamp(2, TS);
-            ps.setInt(3, reason);
-            ps.setInt(4, accountid);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public boolean isBanned() {
-        return isbanned;
+        return isBanned;
     }
 
     public void setBanned() {
-        isbanned = true;
+        isBanned = true;
     }
 
     public List<Integer> getTrockMaps() {

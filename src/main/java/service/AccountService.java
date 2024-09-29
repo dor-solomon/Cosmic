@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -64,6 +65,10 @@ public class AccountService {
 
     public Optional<Account> getAccount(int accountId) {
         return accountRepository.findById(accountId);
+    }
+
+    public Optional<Account> getAccountIdByChrName(String chrName) {
+        return accountRepository.findIdByChrNameIgnoreCase(chrName);
     }
 
     public boolean acceptTos(int accountId) {
@@ -272,6 +277,15 @@ public class AccountService {
         if (!success) {
             log.warn("Failed to set login state - account:{}, newState:{}, loginTime:{}", accountId, newState, loginTime);
         }
+    }
+
+    public void permaBan(int accountId, byte banReason, String description) {
+        accountRepository.setBanned(accountId, null, banReason, description);
+    }
+
+    public void tempBan(int accountId, Duration duration, byte banReason, String description) {
+        Instant bannedUntil = Instant.now().plus(duration);
+        accountRepository.setBanned(accountId, bannedUntil, banReason, description);
     }
 
 }
