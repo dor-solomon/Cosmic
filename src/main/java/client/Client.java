@@ -334,6 +334,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return ret;
     }
 
+    // TODO: load hwidbans on server start and query it on demand. This query should not be run on every login!
+    @Deprecated
     public boolean hasBannedHWID() {
         if (hwid == null) {
             return false;

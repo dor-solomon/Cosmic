@@ -110,7 +110,7 @@ public final class LoginPasswordHandler implements PacketHandler {
         }
 
         boolean banCheckDisabled = false;
-        if (!banCheckDisabled && (c.hasBannedIP() || c.hasBannedMac())) {
+        if (!banCheckDisabled && (c.hasBannedIP() || c.hasBannedMac() || c.hasBannedHWID())) {
             c.sendPacket(PacketCreator.getLoginFailed(3));
             return;
         }
