@@ -38,7 +38,7 @@ public class AccountService {
                 .password(hashPassword(password))
                 .birthdate(GMS_RELEASE)
                 .chrSlots(INITIAL_CHR_SLOTS)
-                .loginState(LoginState.NOT_LOGGED_IN)
+                .loginState(LoginState.LOGGED_OUT)
                 .gender(null)
                 .build();
 
@@ -216,7 +216,7 @@ public class AccountService {
     public boolean setLoggedIn(Client c) {
         byte newState = LoginState.LOGGED_IN;
         int currentState = c.getLoginState();
-        if (currentState != LoginState.NOT_LOGGED_IN && currentState != LoginState.SERVER_TRANSITION) {
+        if (currentState != LoginState.LOGGED_OUT && currentState != LoginState.SERVER_TRANSITION) {
             return false;
         }
 
@@ -230,7 +230,7 @@ public class AccountService {
     }
 
     public void setLoggedOut(Client c) {
-        setLoginState(c, LoginState.NOT_LOGGED_IN);
+        setLoginState(c, LoginState.LOGGED_OUT);
     }
 
     public void setInTransition(Client c) {

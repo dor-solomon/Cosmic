@@ -111,7 +111,7 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         c.setAccount(account);
 
-        if (c.getLoginState(account) > LoginState.NOT_LOGGED_IN) {
+        if (c.getLoginState(account) > LoginState.LOGGED_OUT) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
             return;
         }

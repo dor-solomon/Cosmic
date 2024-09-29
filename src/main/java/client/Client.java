@@ -600,7 +600,7 @@ public class Client extends ChannelInboundHandlerAdapter {
             e.printStackTrace();
         }
 
-        if (newState == LoginState.NOT_LOGGED_IN) {
+        if (newState == LoginState.LOGGED_OUT) {
             loggedIn = false;
             inServerTransition = false;
             setAccID(0);
@@ -614,7 +614,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void setLoginState(int newState) {
-        if (newState == LoginState.NOT_LOGGED_IN) {
+        if (newState == LoginState.LOGGED_OUT) {
             loggedIn = false;
             inServerTransition = false;
             setAccID(0);
@@ -632,8 +632,8 @@ public class Client extends ChannelInboundHandlerAdapter {
     public byte getLoginState(Account account) {
         byte loginState = account.loginState();
         if (loginState == LoginState.SERVER_TRANSITION && lastLoginOverThirtySecondsAgo(account)) {
-            loginState = LoginState.NOT_LOGGED_IN;
-            updateLoginState(LoginState.NOT_LOGGED_IN);
+            loginState = LoginState.LOGGED_OUT;
+            updateLoginState(LoginState.LOGGED_OUT);
         }
 
         if (loginState == LoginState.LOGGED_IN) {
@@ -680,8 +680,8 @@ public class Client extends ChannelInboundHandlerAdapter {
                     if (state == LoginState.SERVER_TRANSITION) {
                         if (rs.getTimestamp("lastlogin").getTime() + 30000 < Server.getInstance().getCurrentTime()) {
                             int accountId = accId;
-                            state = LoginState.NOT_LOGGED_IN;
-                            updateLoginState(LoginState.NOT_LOGGED_IN);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa
+                            state = LoginState.LOGGED_OUT;
+                            updateLoginState(LoginState.LOGGED_OUT);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa
                             this.setAccID(accountId);
                         }
                     }

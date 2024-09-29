@@ -179,11 +179,11 @@ public class TransitionService {
 
 
         if (!c.isInTransition() && c.isLoggedIn()) {
-            c.updateLoginState(LoginState.NOT_LOGGED_IN);
+            c.updateLoginState(LoginState.LOGGED_OUT);
             c.clear();
         } else {
             if (!Server.getInstance().hasCharacteridInTransition(c)) {
-                c.updateLoginState(LoginState.NOT_LOGGED_IN);
+                c.updateLoginState(LoginState.LOGGED_OUT);
             }
 
             c.clearEngines();
