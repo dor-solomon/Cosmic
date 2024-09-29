@@ -49,6 +49,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Objects;
 import java.util.Optional;
 
 public final class LoginPasswordHandler implements PacketHandler {
@@ -107,22 +108,18 @@ public final class LoginPasswordHandler implements PacketHandler {
         }
 
         if (account.banned()) {
-            c.sendPacket(PacketCreator.getLoginFailed(3));
-            // TODO: send ban reason instead of login failed, something like this:
-            // c.sendPacket(PacketCreator.getPermBan(c.getGReason()));
+            byte banReason = Objects.requireNonNullElse(account.banReason(), (byte) 0);
+            c.sendPacket(PacketCreator.getPermBan(banReason));
             return;
         }
 
-        if (account.loginState() != LoginState.LOGGED_OUT) {
-            c.sendPacket(PacketCreator.getLoginFailed(7));
-            return;
-        }
-
-        c.setAccount(account);
-
-        if (!account.acceptedTos()) {
-            c.sendPacket(PacketCreator.getLoginFailed(23));
-            return;
+        boolean tempBanDisabled = false;
+        Calendar tempban = null;
+        if (!tempBanDisabled && (tempban = c.getTempBanCalendarFromDB()) != null) {
+            if (tempban.getTimeInMillis() > Calendar.getInstance().getTimeInMillis()) {
+                c.sendPacket(PacketCreator.getTempBan(tempban.getTimeInMillis(), c.getGReason()));
+                return;
+            }
         }
 
         boolean banCheckDisabled = false;
@@ -138,18 +135,22 @@ public final class LoginPasswordHandler implements PacketHandler {
             c.sendPacket(PacketCreator.getTempBan());
         }
         */
-        boolean tempBanDisabled = false;
-        Calendar tempban = null;
-        if (!tempBanDisabled && (tempban = c.getTempBanCalendarFromDB()) != null) {
-            if (tempban.getTimeInMillis() > Calendar.getInstance().getTimeInMillis()) {
-                c.sendPacket(PacketCreator.getTempBan(tempban.getTimeInMillis(), c.getGReason()));
-                return;
-            }
+
+        if (account.loginState() != LoginState.LOGGED_OUT) {
+            c.sendPacket(PacketCreator.getLoginFailed(7));
+            return;
         }
 
         Integer failureCode = checkMultiClient(c);
         if (failureCode != null) {
             c.sendPacket(PacketCreator.getLoginFailed(failureCode));
+            return;
+        }
+
+        c.setAccount(account);
+
+        if (!account.acceptedTos()) {
+            c.sendPacket(PacketCreator.getLoginFailed(23));
             return;
         }
 

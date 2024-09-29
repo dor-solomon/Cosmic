@@ -35,6 +35,8 @@ public class AccountRowMapper implements RowMapper<Account> {
                         .map(Timestamp::toLocalDateTime)
                         .orElse(null))
                 .banned(rs.getBoolean("banned"))
+                .banReason(rs.getByte("ban_reason"))
+                .banDescription(rs.getString("ban_description"))
                 .tempBannedUntil(Optional.ofNullable(rs.getTimestamp("temp_banned_until"))
                         .map(Timestamp::toLocalDateTime)
                         .orElse(null))

@@ -20,7 +20,7 @@ public class AccountRepository {
     public Optional<Account> findByNameIgnoreCase(String name) {
         String sql = """
                 SELECT id, name, password, pin, pic, birthdate, gender, tos_accepted, chr_slots, login_state,
-                    last_login, banned, temp_banned_until
+                    last_login, banned, ban_reason, ban_description, temp_banned_until
                 FROM account
                 WHERE lower(name) = lower(:name)""";
         try (Handle handle = connection.getHandle()) {
@@ -34,7 +34,7 @@ public class AccountRepository {
     public Optional<Account> findById(int accountId) {
         String sql = """
                 SELECT id, name, password, pin, pic, birthdate, gender, tos_accepted, chr_slots, login_state,
-                    last_login, banned, temp_banned_until
+                    last_login, banned, ban_reason, ban_description, temp_banned_until
                 FROM account
                 WHERE id = :id""";
         try (Handle handle = connection.getHandle()) {

@@ -683,12 +683,30 @@ public class PacketCreator {
         return p;
     }
 
+    /**
+     * @param reason
+     * 0: "This is an ID that has been deleted or blocked from connection. Please check again."
+     * 1: "You account has been blocked for hacking or illegal use of third-party programs. (...)"
+     * 2: "Your account has been blocked for using macro / auto-keyboard. (...)"
+     * 3: "Your account has been blocked for illicit promotion and advertising. (...)"
+     * 4: "Your account has been blocked for harassment. (...)"
+     * 5: "Your account has been blocked for using profane language. (...)"
+     * 6: "Your account has been blocked for scamming. (...)"
+     * 7: "Your account has been blocked for misconduct. (...)"
+     * 8: "Your account has been blocked for illegal cash transaction. (...)"
+     * 9: "Your account has been blocked for illegal charging/funding. Please contact customer support for further details. (...)"
+     * 10: "Your account has been blocked for temporary request. Please contact customer support for further details. (...)"
+     * 11: "Your account has been blocked for impersonating GM. (...)"
+     * 12: "Your account has been blocked for using illegal programs or violating the game policy. (...)"
+     * 13: "Your account has been blocked for one of cursing, scamming, or illegal trading via Megaphones. (...)"
+     * 14+ "The ID has been permanently blocked. So YOu won't be able to use this account."
+     */
     public static Packet getPermBan(byte reason) {
         final OutPacket p = OutPacket.create(SendOpcode.LOGIN_STATUS);
         p.writeByte(2); // Account is banned
         p.writeByte(0);
         p.writeInt(0);
-        p.writeByte(0);
+        p.writeByte(reason);
         p.writeLong(getTime(-1));
         return p;
     }
