@@ -582,19 +582,20 @@ public class Client extends ChannelInboundHandlerAdapter {
         return accId;
     }
 
-    public void setLoginState(int newState) {
-        if (newState == LoginState.LOGGED_OUT) {
-            loggedIn = false;
-            inServerTransition = false;
-            setAccID(0);
-        } else if (newState == LoginState.SERVER_TRANSITION) {
-            loggedIn = false;
-            inServerTransition = true;
-        } else if (newState == LoginState.LOGGED_IN) {
-            loggedIn = true;
-            inServerTransition = false;
-        } else {
-            throw new IllegalArgumentException("Invalid login state: " + newState);
+    public void onChangedLoginState(LoginState newState) {
+        switch (newState) {
+            case LoginState.LOGGED_OUT -> {
+                loggedIn = false;
+                inServerTransition = false;
+            }
+            case LoginState.SERVER_TRANSITION -> {
+                loggedIn = false;
+                inServerTransition = true;
+            }
+            case LoginState.LOGGED_IN -> {
+                loggedIn = true;
+                inServerTransition = false;
+            }
         }
     }
 

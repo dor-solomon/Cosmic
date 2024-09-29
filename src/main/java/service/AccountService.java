@@ -219,7 +219,7 @@ public class AccountService {
             throw new IllegalStateException("Unable to set logged in - no account");
         }
 
-        int currentState = account.loginState();
+        LoginState currentState = account.loginState();
         if (currentState != LoginState.LOGGED_OUT && currentState != LoginState.SERVER_TRANSITION) {
             return false;
         }
@@ -242,22 +242,22 @@ public class AccountService {
         setLoginState(c, LoginState.SERVER_TRANSITION);
     }
 
-    private void setLoginState(Client c, byte newState) {
+    private void setLoginState(Client c, LoginState newState) {
         saveLoginState(c.getAccID(), newState);
-        c.setLoginState(newState);
+        c.onChangedLoginState(newState);
     }
 
-    private void saveLoginState(int accountId, byte newState) {
+    private void saveLoginState(int accountId, LoginState newState) {
         setLoginStateMysql(accountId, newState);
         setLoginStatePostgres(accountId, newState);
     }
 
-    private void setLoginStateMysql(int accountId, byte newState) {
+    private void setLoginStateMysql(int accountId, LoginState newState) {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = ?, lastlogin = ? WHERE id = ?")) {
             // using sql currenttime here could potentially break the login, thanks Arnah for pointing this out
 
-            ps.setInt(1, newState);
+            ps.setInt(1, newState.getValue());
             ps.setTimestamp(2, new java.sql.Timestamp(Server.getInstance().getCurrentTime()));
             ps.setInt(3, accountId);
             ps.executeUpdate();
@@ -266,7 +266,7 @@ public class AccountService {
         }
     }
 
-    private void setLoginStatePostgres(int accountId, byte newState) {
+    private void setLoginStatePostgres(int accountId, LoginState newState) {
         Instant loginTime = Instant.now();
         boolean success = accountRepository.setLoginState(accountId, newState, loginTime);
         if (!success) {

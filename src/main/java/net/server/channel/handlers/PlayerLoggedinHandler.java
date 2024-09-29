@@ -192,7 +192,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             }
 
             try {
-                int state = account.loginState();
+                LoginState state = account.loginState();
                 if (state != LoginState.SERVER_TRANSITION) {
                     c.setPlayer(null);
                     c.setAccID(0);

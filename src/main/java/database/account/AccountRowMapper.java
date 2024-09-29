@@ -1,5 +1,7 @@
 package database.account;
 
+import client.LoginState;
+import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -11,6 +13,7 @@ import java.util.Optional;
 /**
  * @author Ponk
  */
+@Slf4j
 public class AccountRowMapper implements RowMapper<Account> {
 
     @Override
@@ -27,7 +30,7 @@ public class AccountRowMapper implements RowMapper<Account> {
                         .orElse(null))
                 .acceptedTos(rs.getBoolean("tos_accepted"))
                 .chrSlots(rs.getByte("chr_slots"))
-                .loginState(rs.getByte("login_state"))
+                .loginState(getLoginState(rs.getByte("login_state")))
                 .lastLogin(Optional.ofNullable(rs.getTimestamp("last_login"))
                         .map(Timestamp::toLocalDateTime)
                         .orElse(null))
@@ -36,5 +39,13 @@ public class AccountRowMapper implements RowMapper<Account> {
                         .map(Timestamp::toLocalDateTime)
                         .orElse(null))
                 .build();
+    }
+
+    private static LoginState getLoginState(byte dbValue) {
+        Optional<LoginState> loginState = LoginState.fromValue(dbValue);
+        if (loginState.isEmpty()) {
+            throw new IllegalStateException("Invalid login state: " + dbValue);
+        }
+        return loginState.get();
     }
 }

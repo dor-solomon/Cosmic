@@ -113,7 +113,7 @@ public final class LoginPasswordHandler implements PacketHandler {
             return;
         }
 
-        if (account.loginState() > LoginState.LOGGED_OUT) {
+        if (account.loginState() != LoginState.LOGGED_OUT) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
             return;
         }

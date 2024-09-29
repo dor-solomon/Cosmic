@@ -1,5 +1,6 @@
 package database.account;
 
+import client.LoginState;
 import database.PgDatabaseConnection;
 import org.jdbi.v3.core.Handle;
 
@@ -126,7 +127,7 @@ public class AccountRepository {
         }
     }
 
-    public boolean setLoginState(int accountId, byte loginState, Instant lastLogin) {
+    public boolean setLoginState(int accountId, LoginState loginState, Instant lastLogin) {
         String sql = """
                 UPDATE account
                 SET login_state = :loginState, last_login = :lastLogin
@@ -134,7 +135,7 @@ public class AccountRepository {
         try (Handle handle = connection.getHandle()) {
             return handle.createUpdate(sql)
                     .bind("id", accountId)
-                    .bind("loginState", loginState)
+                    .bind("loginState", loginState.getValue())
                     .bind("lastLogin", lastLogin)
                     .execute() > 0;
         }
