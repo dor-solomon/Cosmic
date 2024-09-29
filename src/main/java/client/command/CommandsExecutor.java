@@ -185,15 +185,10 @@ import client.command.commands.gm6.EraseAllPNpcsCommand;
 import client.command.commands.gm6.GetAccCommand;
 import client.command.commands.gm6.MapPlayersCommand;
 import client.command.commands.gm6.SaveAllCommand;
-import client.command.commands.gm6.ServerAddChannelCommand;
-import client.command.commands.gm6.ServerAddWorldCommand;
-import client.command.commands.gm6.ServerRemoveChannelCommand;
-import client.command.commands.gm6.ServerRemoveWorldCommand;
 import client.command.commands.gm6.SetGmLevelCommand;
 import client.command.commands.gm6.ShutdownCommand;
 import client.command.commands.gm6.SpawnAllPNpcsCommand;
 import client.command.commands.gm6.SupplyRateCouponCommand;
-import client.command.commands.gm6.WarpWorldCommand;
 import constants.id.MapId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -535,7 +530,6 @@ public class CommandsExecutor {
         levelCommandsCursor = new Pair<>(new ArrayList<String>(), new ArrayList<String>());
 
         addCommand("setgmlevel", 6, SetGmLevelCommand.class);
-        addCommand("warpworld", 6, WarpWorldCommand.class);
         addCommand("saveall", 6, SaveAllCommand.class);
         addCommand("dcall", 6, DCAllCommand.class);
         addCommand("mapplayers", 6, MapPlayersCommand.class);
@@ -546,10 +540,6 @@ public class CommandsExecutor {
         addCommand("supplyratecoupon", 6, SupplyRateCouponCommand.class);
         addCommand("spawnallpnpcs", 6, SpawnAllPNpcsCommand.class);
         addCommand("eraseallpnpcs", 6, EraseAllPNpcsCommand.class);
-        addCommand("addchannel", 6, ServerAddChannelCommand.class);
-        addCommand("addworld", 6, ServerAddWorldCommand.class);
-        addCommand("removechannel", 6, ServerRemoveChannelCommand.class);
-        addCommand("removeworld", 6, ServerRemoveWorldCommand.class);
         addCommand("devtest", 6, DevtestCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);

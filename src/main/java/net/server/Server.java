@@ -358,82 +358,6 @@ public class Server {
         }
     }
 
-
-    private void dumpData() {
-        wldRLock.lock();
-        try {
-            log.debug("Worlds: {}", worlds);
-            log.debug("Channels: {}", channels);
-            log.debug("World recommended list: {}", worldRecommendedList);
-            log.debug("---------------------");
-        } finally {
-            wldRLock.unlock();
-        }
-    }
-
-    public int addChannel(int worldid) {
-        World world;
-        Map<Integer, String> channelInfo;
-        int channelid;
-
-        wldRLock.lock();
-        try {
-            if (worldid >= worlds.size()) {
-                return -3;
-            }
-
-            channelInfo = channels.get(worldid);
-            if (channelInfo == null) {
-                return -3;
-            }
-
-            channelid = channelInfo.size();
-            if (channelid >= YamlConfig.config.server.CHANNEL_SIZE) {
-                return -2;
-            }
-
-            channelid++;
-            world = this.getWorld(worldid);
-        } finally {
-            wldRLock.unlock();
-        }
-
-        Channel channel = new Channel(worldid, channelid, getCurrentTime(), channelDependencies);
-        channel.setServerMessage(YamlConfig.config.worlds.get(worldid).why_am_i_recommended);
-
-        if (world.addChannel(channel)) {
-            wldWLock.lock();
-            try {
-                channelInfo.put(channelid, channel.getIP());
-            } finally {
-                wldWLock.unlock();
-            }
-        }
-
-        return channelid;
-    }
-
-    public int addWorld() {
-        int newWorld = initWorld();
-        if (newWorld > -1) {
-            installWorldPlayerRanking(newWorld);
-
-            Set<Integer> accounts;
-            lgnRLock.lock();
-            try {
-                accounts = new HashSet<>(accountChars.keySet());
-            } finally {
-                lgnRLock.unlock();
-            }
-
-            for (Integer accId : accounts) {
-                loadAccountCharactersView(accId, 0, newWorld);
-            }
-        }
-
-        return newWorld;
-    }
-
     private int initWorld() {
         int i;
 
@@ -499,74 +423,6 @@ public class Server {
             world.shutdown();
             return -2;
         }
-    }
-
-    public boolean removeChannel(int worldid) {   //lol don't!
-        World world;
-
-        wldRLock.lock();
-        try {
-            if (worldid >= worlds.size()) {
-                return false;
-            }
-            world = worlds.get(worldid);
-        } finally {
-            wldRLock.unlock();
-        }
-
-        if (world != null) {
-            int channel = world.removeChannel();
-            wldWLock.lock();
-            try {
-                Map<Integer, String> m = channels.get(worldid);
-                if (m != null) {
-                    m.remove(channel);
-                }
-            } finally {
-                wldWLock.unlock();
-            }
-
-            return channel > -1;
-        }
-
-        return false;
-    }
-
-    public boolean removeWorld() {   //lol don't!
-        World w;
-        int worldid;
-
-        wldRLock.lock();
-        try {
-            worldid = worlds.size() - 1;
-            if (worldid < 0) {
-                return false;
-            }
-
-            w = worlds.get(worldid);
-        } finally {
-            wldRLock.unlock();
-        }
-
-        if (w == null || !w.canUninstall()) {
-            return false;
-        }
-
-        removeWorldPlayerRanking();
-        w.shutdown();
-
-        wldWLock.lock();
-        try {
-            if (worldid == worlds.size() - 1) {
-                worlds.remove(worldid);
-                channels.remove(worldid);
-                worldRecommendedList.remove(worldid);
-            }
-        } finally {
-            wldWLock.unlock();
-        }
-
-        return true;
     }
 
     private void resetServerWorlds() {  // thanks maple006 for noticing proprietary lists assigned to null
@@ -747,50 +603,6 @@ public class Server {
             return new ArrayList<>(playerRanking.get(!YamlConfig.config.server.USE_WHOLE_SERVER_RANKING ? worldid : 0));
         } finally {
             wldRLock.unlock();
-        }
-    }
-
-    private void installWorldPlayerRanking(int worldid) {
-        List<Pair<Integer, List<Pair<String, Integer>>>> ranking = loadPlayerRankingFromDB(worldid);
-        if (!ranking.isEmpty()) {
-            wldWLock.lock();
-            try {
-                if (!YamlConfig.config.server.USE_WHOLE_SERVER_RANKING) {
-                    for (int i = playerRanking.size(); i <= worldid; i++) {
-                        playerRanking.add(new ArrayList<>(0));
-                    }
-
-                    playerRanking.add(worldid, ranking.get(0).getRight());
-                } else {
-                    playerRanking.add(0, ranking.get(0).getRight());
-                }
-            } finally {
-                wldWLock.unlock();
-            }
-        }
-    }
-
-    private void removeWorldPlayerRanking() {
-        if (!YamlConfig.config.server.USE_WHOLE_SERVER_RANKING) {
-            wldWLock.lock();
-            try {
-                if (playerRanking.size() < worlds.size()) {
-                    return;
-                }
-
-                playerRanking.remove(playerRanking.size() - 1);
-            } finally {
-                wldWLock.unlock();
-            }
-        } else {
-            List<Pair<Integer, List<Pair<String, Integer>>>> ranking = loadPlayerRankingFromDB(-1 * (this.getWorldsSize() - 2));  // update ranking list
-
-            wldWLock.lock();
-            try {
-                playerRanking.add(0, ranking.get(0).getRight());
-            } finally {
-                wldWLock.unlock();
-            }
         }
     }
 
@@ -1357,15 +1169,6 @@ public class Server {
         return buffStorage;
     }
 
-    public void deleteGuildCharacter(Character mc) {
-        setGuildMemberOnline(mc, false, (byte) -1);
-        if (mc.getMGC().getGuildRank() > 1) {
-            leaveGuild(mc.getMGC());
-        } else {
-            disbandGuild(mc.getMGC().getGuildId());
-        }
-    }
-
     public void deleteGuildCharacter(GuildCharacter mgc) {
         if (mgc.getCharacter() != null) {
             setGuildMemberOnline(mgc.getCharacter(), false, (byte) -1);
@@ -1375,17 +1178,6 @@ public class Server {
         } else {
             disbandGuild(mgc.getGuildId());
         }
-    }
-
-    public void reloadGuildCharacters(int world) {
-        World worlda = getWorld(world);
-        for (Character mc : worlda.getPlayerStorage().getAllCharacters()) {
-            if (mc.getGuildId() > 0) {
-                setGuildMemberOnline(mc, true, worlda.getId());
-                memberLevelJobUpdate(mc.getMGC());
-            }
-        }
-        worlda.reloadGuildSummary();
     }
 
     public void broadcastMessage(int world, Packet packet) {

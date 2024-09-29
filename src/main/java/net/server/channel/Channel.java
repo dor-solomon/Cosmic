@@ -350,10 +350,6 @@ public final class Channel {
         playersAway.remove(chrId);
     }
 
-    public boolean canUninstall() {
-        return players.getSize() == 0 && playersAway.isEmpty();
-    }
-
     private void disconnectAwayPlayers() {
         World wserv = getWorldServer();
         for (Integer cid : playersAway) {

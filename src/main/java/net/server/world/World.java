@@ -296,55 +296,6 @@ public class World {
         }
     }
 
-    public int removeChannel() {
-        Channel ch;
-        int chIdx;
-
-        chnRLock.lock();
-        try {
-            chIdx = channels.size() - 1;
-            if (chIdx < 0) {
-                return -1;
-            }
-
-            ch = channels.get(chIdx);
-        } finally {
-            chnRLock.unlock();
-        }
-
-        if (ch == null || !ch.canUninstall()) {
-            return -1;
-        }
-
-        chnWLock.lock();
-        try {
-            if (chIdx == channels.size() - 1) {
-                channels.remove(chIdx);
-            } else {
-                return -1;
-            }
-        } finally {
-            chnWLock.unlock();
-        }
-
-        ch.shutdown();
-        return ch.getId();
-    }
-
-    public boolean canUninstall() {
-        if (players.getSize() > 0) {
-            return false;
-        }
-
-        for (Channel ch : this.getChannels()) {
-            if (!ch.canUninstall()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     public void setFlag(byte b) {
         this.flag = b;
     }
