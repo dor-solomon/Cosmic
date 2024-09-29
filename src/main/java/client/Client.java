@@ -621,9 +621,11 @@ public class Client extends ChannelInboundHandlerAdapter {
         } else if (newState == LoginState.SERVER_TRANSITION) {
             loggedIn = false;
             inServerTransition = true;
-        } else {
+        } else if (newState == LoginState.LOGGED_IN) {
             loggedIn = true;
             inServerTransition = false;
+        } else {
+            throw new IllegalArgumentException("Invalid login state: " + newState);
         }
     }
 

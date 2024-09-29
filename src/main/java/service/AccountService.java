@@ -215,7 +215,8 @@ public class AccountService {
 
     public boolean logIn(Client c) {
         byte newState = LoginState.LOGGED_IN;
-        if (c.getLoginState() != LoginState.NOT_LOGGED_IN) {
+        int currentState = c.getLoginState();
+        if (currentState != LoginState.NOT_LOGGED_IN && currentState != LoginState.SERVER_TRANSITION) {
             return false;
         }
 
