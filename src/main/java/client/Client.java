@@ -108,7 +108,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private Set<String> macs = new HashSet<>();
     private Map<String, ScriptEngine> engines = new HashMap<>();
     private byte characterSlots = 3;
-    private byte loginattempt = 0;
+    private byte failedLoginAttempts = 0;
     private String pin = "";
     private int pinattempt = 0;
     private String pic = "";
@@ -295,6 +295,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         LocalDate birthdate = account.birthdate();
         calendar.set(birthdate.getYear(), birthdate.getMonthValue() - 1, birthdate.getDayOfMonth());
         this.birthday = calendar;
+        loggedIn = account.loginState() == LoginState.LOGGED_IN;
+        inServerTransition = account.loginState() == LoginState.SERVER_TRANSITION;
     }
 
     public Character getPlayer() {
@@ -499,9 +501,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         return false;
     }
 
-    public boolean tryLogin() {
-        if (++loginattempt >= MAX_FAILED_LOGIN_ATTEMPTS) {
-            loggedIn = false;
+    public boolean attemptLogin() {
+        if (++failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
             SessionCoordinator.getInstance().closeSession(this, false);
             return false;
         }
@@ -656,53 +657,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         return account.lastLogin().isBefore(LocalDateTime.now().minusSeconds(30));
-    }
-
-    // TODO: move to LoginPasswordHandler
-    public int getLoginState() {  // 0 = LOGIN_NOTLOGGEDIN, 1= LOGIN_SERVER_TRANSITION, 2 = LOGIN_LOGGEDIN
-        try (Connection con = DatabaseConnection.getConnection()) {
-            int state;
-            try (PreparedStatement ps = con.prepareStatement("SELECT loggedin, lastlogin, birthday FROM accounts WHERE id = ?")) {
-                ps.setInt(1, getAccID());
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        throw new RuntimeException("getLoginState - Client AccID: " + getAccID());
-                    }
-
-                    birthday = Calendar.getInstance();
-                    try {
-                        birthday.setTime(rs.getDate("birthday"));
-                    } catch (SQLException e) {
-                    }
-
-                    state = rs.getInt("loggedin");
-                    if (state == LoginState.SERVER_TRANSITION) {
-                        if (rs.getTimestamp("lastlogin").getTime() + 30000 < Server.getInstance().getCurrentTime()) {
-                            int accountId = accId;
-                            state = LoginState.LOGGED_OUT;
-                            updateLoginState(LoginState.LOGGED_OUT);   // ACCID = 0, issue found thanks to Tochi & K u ssss o & Thora & Omo Oppa
-                            this.setAccID(accountId);
-                        }
-                    }
-                }
-            }
-            if (state == LoginState.LOGGED_IN) {
-                loggedIn = true;
-            } else if (state == LoginState.SERVER_TRANSITION) {
-                try (PreparedStatement ps2 = con.prepareStatement("UPDATE accounts SET loggedin = 0 WHERE id = ?")) {
-                    ps2.setInt(1, getAccID());
-                    ps2.executeUpdate();
-                }
-            } else {
-                loggedIn = false;
-            }
-            return state;
-        } catch (SQLException e) {
-            loggedIn = false;
-            e.printStackTrace();
-            throw new RuntimeException("login state");
-        }
     }
 
     public boolean checkBirthDate(Calendar date) {

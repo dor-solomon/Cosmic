@@ -82,7 +82,7 @@ public final class LoginPasswordHandler implements PacketHandler {
         byte[] hwidNibbles = p.readBytes(4);
         c.setHwid(new Hwid(HexTool.toCompactHexString(hwidNibbles)));
 
-        if (!c.tryLogin()) {
+        if (!c.attemptLogin()) {
             return;
         }
         Optional<Account> foundAccount = accountService.getAccount(login);
