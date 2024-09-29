@@ -42,7 +42,7 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
     public void handlePacket(InPacket p, Client c) {
         boolean cancel = p.readByte() == 0;
         if (cancel) {
-            accountService.logOut(c);
+            accountService.setLoggedOutAndDisconnect(c);
             return;
         }
 
@@ -51,6 +51,6 @@ public final class RegisterPinHandler extends AbstractPacketHandler {
         c.setPin(pin);
         c.sendPacket(PacketCreator.pinRegistered());
 
-        accountService.logOut(c);
+        accountService.setLoggedOutAndDisconnect(c);
     }
 }

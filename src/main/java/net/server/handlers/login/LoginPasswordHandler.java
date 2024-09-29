@@ -149,7 +149,7 @@ public final class LoginPasswordHandler implements PacketHandler {
             return;
         }
 
-        if (!accountService.logIn(c)) {
+        if (!accountService.setLoggedIn(c)) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
         }
         removeOnlineAccountChrs(c);

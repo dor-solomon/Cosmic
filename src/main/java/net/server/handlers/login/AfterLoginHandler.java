@@ -62,7 +62,7 @@ public final class AfterLoginHandler extends AbstractPacketHandler {
                 c.sendPacket(PacketCreator.requestPinAfterFailure());
             }
         } else if (c2 == 0 && c3 == 5) {
-            accountService.logOut(c);
+            accountService.setLoggedOutAndDisconnect(c);
         }
     }
 }

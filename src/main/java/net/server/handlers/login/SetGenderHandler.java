@@ -71,7 +71,7 @@ public class SetGenderHandler extends AbstractPacketHandler {
     }
 
     private void logOut(Client c) {
-        accountService.logOut(c);
+        accountService.setLoggedOutAndDisconnect(c);
     }
 
 }

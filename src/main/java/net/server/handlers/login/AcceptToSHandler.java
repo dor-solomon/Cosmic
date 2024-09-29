@@ -29,7 +29,7 @@ public final class AcceptToSHandler extends AbstractPacketHandler {
             throw new GameViolationException("ToS not accepted");
         }
 
-        if (!accountService.logIn(c)) {
+        if (!accountService.setLoggedIn(c)) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
         }
 

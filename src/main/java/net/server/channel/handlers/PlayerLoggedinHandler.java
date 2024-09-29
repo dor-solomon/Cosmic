@@ -205,7 +205,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
 
                     return;
                 }
-                accountService.logIn(c);
+                accountService.setLoggedIn(c);
             } finally {
                 releaseAccount(accId);
             }

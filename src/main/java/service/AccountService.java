@@ -213,7 +213,7 @@ public class AccountService {
         return accountRepository.setChrSlots(accountId, chrSlots);
     }
 
-    public boolean logIn(Client c) {
+    public boolean setLoggedIn(Client c) {
         byte newState = LoginState.LOGGED_IN;
         int currentState = c.getLoginState();
         if (currentState != LoginState.NOT_LOGGED_IN && currentState != LoginState.SERVER_TRANSITION) {
@@ -224,8 +224,12 @@ public class AccountService {
         return true;
     }
 
-    public void logOut(Client c) {
+    public void setLoggedOutAndDisconnect(Client c) {
         SessionCoordinator.getInstance().closeSession(c, false);
+        setLoggedOut(c);
+    }
+
+    public void setLoggedOut(Client c) {
         setLoginState(c, LoginState.NOT_LOGGED_IN);
     }
 
