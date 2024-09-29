@@ -61,7 +61,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -504,37 +503,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return ++failedLoginAttempts < MAX_FAILED_LOGIN_ATTEMPTS;
     }
 
-    // TODO: check tempban directly on loaded account
-    @Deprecated
-    public Calendar getTempBanCalendarFromDB() {
-        final Calendar lTempban = Calendar.getInstance();
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `tempban` FROM accounts WHERE id = ?")) {
-            ps.setInt(1, getAccID());
-
-            final Timestamp tempban;
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-
-                tempban = rs.getTimestamp("tempban");
-                if (tempban.toLocalDateTime().equals(DefaultDates.getTempban())) {
-                    return null;
-                }
-            }
-
-            lTempban.setTimeInMillis(tempban.getTime());
-            tempBanCalendar = lTempban;
-            return lTempban;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return null;//why oh why!?!
-    }
-
     public Calendar getTempBanCalendar() {
         return tempBanCalendar;
     }
@@ -798,22 +766,6 @@ public class Client extends ChannelInboundHandlerAdapter {
             return true;
         }
         return false;
-    }
-
-    public final byte getGReason() {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT `greason` FROM `accounts` WHERE id = ?")) {
-            ps.setInt(1, accId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getByte("greason");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
     }
 
     public byte getGender() {

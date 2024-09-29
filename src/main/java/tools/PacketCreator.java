@@ -711,7 +711,7 @@ public class PacketCreator {
         return p;
     }
 
-    public static Packet getTempBan(long timestampTill, byte reason) {
+    public static Packet getTempBan(byte reason, long timestampTill) {
         OutPacket p = OutPacket.create(SendOpcode.LOGIN_STATUS);
         p.writeByte(2);
         p.writeByte(0);

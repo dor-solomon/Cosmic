@@ -48,7 +48,6 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -109,17 +108,12 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         if (account.banned()) {
             byte banReason = Objects.requireNonNullElse(account.banReason(), (byte) 0);
-            c.sendPacket(PacketCreator.getPermBan(banReason));
-            return;
-        }
-
-        boolean tempBanDisabled = false;
-        Calendar tempban = null;
-        if (!tempBanDisabled && (tempban = c.getTempBanCalendarFromDB()) != null) {
-            if (tempban.getTimeInMillis() > Calendar.getInstance().getTimeInMillis()) {
-                c.sendPacket(PacketCreator.getTempBan(tempban.getTimeInMillis(), c.getGReason()));
-                return;
+            if (account.bannedUntil() != null) {
+                c.sendPacket(PacketCreator.getTempBan(banReason, account.bannedUntil().toEpochMilli()));
+            } else {
+                c.sendPacket(PacketCreator.getPermBan(banReason));
             }
+            return;
         }
 
         boolean banCheckDisabled = false;
@@ -127,14 +121,6 @@ public final class LoginPasswordHandler implements PacketHandler {
             c.sendPacket(PacketCreator.getLoginFailed(3));
             return;
         }
-
-        /* TODO: check temp ban from account, something like this:
-        LocalDateTime tempBan = account.tempBanTimestamp();
-        if (tempBan != null && tempBan.isAfter(LocalDateTime.now())) {
-            Duration remainingTempBan = Duration.between(LocalDateTime.now(), tempBan);
-            c.sendPacket(PacketCreator.getTempBan());
-        }
-        */
 
         if (account.loginState() != LoginState.LOGGED_OUT) {
             c.sendPacket(PacketCreator.getLoginFailed(7));
