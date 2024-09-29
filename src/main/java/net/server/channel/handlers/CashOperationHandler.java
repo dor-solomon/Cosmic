@@ -51,8 +51,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-
 public final class CashOperationHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(CashOperationHandler.class);
 
@@ -419,7 +417,7 @@ public final class CashOperationHandler extends AbstractPacketHandler {
                             c.sendPacket(PacketCreator.showCashShopMessage((byte) 0));
                             c.enableCSActions();
                             return;
-                        } else if (c.getTempBanCalendar() != null && (c.getTempBanCalendar().getTimeInMillis() + DAYS.toMillis(30)) > Calendar.getInstance().getTimeInMillis()) {
+                        } else if (c.wasRecentlyBanned()) {
                             c.sendPacket(PacketCreator.showCashShopMessage((byte) 0));
                             c.enableCSActions();
                             return;

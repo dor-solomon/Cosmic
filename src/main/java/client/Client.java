@@ -61,6 +61,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -118,7 +120,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     private final Lock lock = new ReentrantLock(true);
     private final Lock announcerLock = new ReentrantLock(true);
     // thanks Masterrulax & try2hack for pointing out a bottleneck issue with shared locks, shavit for noticing an opportunity for improvement
-    private Calendar tempBanCalendar;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
 
@@ -500,8 +501,9 @@ public class Client extends ChannelInboundHandlerAdapter {
         return ++failedLoginAttempts < MAX_FAILED_LOGIN_ATTEMPTS;
     }
 
-    public Calendar getTempBanCalendar() {
-        return tempBanCalendar;
+    public boolean wasRecentlyBanned() {
+        Instant recentThreshold = Instant.now().minus(Duration.ofDays(30));
+        return account != null && account.bannedUntil() != null && account.bannedUntil().isAfter(recentThreshold);
     }
 
     public void updateHwid(Hwid hwid) {
