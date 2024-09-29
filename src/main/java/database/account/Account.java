@@ -12,8 +12,8 @@ import java.util.Objects;
  */
 @Builder
 public record Account(int id, String name, String password, boolean acceptedTos, Byte gender, LocalDate birthdate,
-                      String pin, String pic, byte chrSlots, LoginState loginState, LocalDateTime lastLogin, boolean banned,
-                      LocalDateTime tempBanTimestamp) {
+                      String pin, String pic, byte chrSlots, LoginState loginState, LocalDateTime lastLogin,
+                      boolean banned, LocalDateTime tempBannedUntil) {
     public Account {
         Objects.requireNonNull(name);
         Objects.requireNonNull(password);
