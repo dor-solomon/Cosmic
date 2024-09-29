@@ -1,6 +1,7 @@
 package service;
 
 import client.Client;
+import client.DefaultDates;
 import client.LoginState;
 import database.account.Account;
 import database.account.AccountRepository;
@@ -11,9 +12,11 @@ import tools.BCrypt;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,7 +36,13 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
-    public Account createNew(String name, String password) {
+    public Account createAccount(String name, String password) {
+        Account account = createAccountPostgres(name, password);
+        createAccountMysql(account.id(), name, password);
+        return account;
+    }
+
+    private Account createAccountPostgres(String name, String password) {
         Account newAccount = Account.builder()
                 .name(name)
                 .password(hashPassword(password))
@@ -53,6 +62,20 @@ public class AccountService {
 
         return getAccount(accountId)
                 .orElseThrow(() -> new RuntimeException("Failed to get account after insert, id: " + accountId));
+    }
+
+    private void createAccountMysql(int id, String name, String password) {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (id, name, password, birthday, tempban) VALUES (?, ?, ?, ?, ?);")) {
+            ps.setInt(1, id);
+            ps.setString(2, name);
+            ps.setString(3, BCrypt.hashpw(password, BCrypt.gensalt()));
+            ps.setDate(4, Date.valueOf(DefaultDates.getBirthday()));
+            ps.setTimestamp(5, Timestamp.valueOf(DefaultDates.getTempban()));
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String hashPassword(String password) {

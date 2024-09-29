@@ -23,7 +23,6 @@ package net.server.handlers.login;
 
 import client.Character;
 import client.Client;
-import client.DefaultDates;
 import client.LoginState;
 import config.YamlConfig;
 import constants.game.GameConstants;
@@ -39,15 +38,9 @@ import org.slf4j.LoggerFactory;
 import service.AccountService;
 import service.TransitionService;
 import tools.BCrypt;
-import tools.DatabaseConnection;
 import tools.HexTool;
 import tools.PacketCreator;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -91,7 +84,7 @@ public final class LoginPasswordHandler implements PacketHandler {
         Optional<Account> foundAccount = accountService.getAccount(login);
         if (foundAccount.isEmpty()) {
             if (YamlConfig.config.server.AUTOMATIC_REGISTER) {
-                Account newAccount = createAccount(login, pwd);
+                Account newAccount = accountService.createAccount(login, pwd);
                 foundAccount = Optional.of(newAccount);
             } else {
                 c.sendPacket(PacketCreator.getLoginFailed(5));
@@ -147,30 +140,6 @@ public final class LoginPasswordHandler implements PacketHandler {
 
         c.sendPacket(PacketCreator.getAuthSuccess(c));
         Server.getInstance().registerLoginState(c);
-    }
-
-    private Account createAccount(String name, String password) {
-        Account account = createAccountPostgres(name, password);
-        createAccountMysql(account.id(), name, password);
-        return account;
-    }
-
-    private Account createAccountPostgres(String name, String password) {
-        return accountService.createNew(name, password);
-    }
-
-    private void createAccountMysql(int id, String name, String password) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("INSERT INTO accounts (id, name, password, birthday, tempban) VALUES (?, ?, ?, ?, ?);")) {
-            ps.setInt(1, id);
-            ps.setString(2, name);
-            ps.setString(3, BCrypt.hashpw(password, BCrypt.gensalt()));
-            ps.setDate(4, Date.valueOf(DefaultDates.getBirthday()));
-            ps.setTimestamp(5, Timestamp.valueOf(DefaultDates.getTempban()));
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private boolean correctPassword(String input, Account account) {
