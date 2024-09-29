@@ -17,7 +17,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -90,7 +89,7 @@ public class AccountService {
         return accountRepository.findById(accountId);
     }
 
-    public Optional<Account> getAccountIdByChrName(String chrName) {
+    public Optional<Integer> getAccountIdByChrName(String chrName) {
         return accountRepository.findIdByChrNameIgnoreCase(chrName);
     }
 
@@ -302,13 +301,8 @@ public class AccountService {
         }
     }
 
-    public void permaBan(int accountId, byte banReason, String description) {
-        accountRepository.setBanned(accountId, null, banReason, description);
-    }
-
-    public void tempBan(int accountId, Duration duration, byte banReason, String description) {
-        Instant bannedUntil = Instant.now().plus(duration);
-        accountRepository.setBanned(accountId, bannedUntil, banReason, description);
+    public boolean ban(int accountId, Instant bannedUntil, byte banReason, String description) {
+        return accountRepository.setBanned(accountId, bannedUntil, banReason, description);
     }
 
 }

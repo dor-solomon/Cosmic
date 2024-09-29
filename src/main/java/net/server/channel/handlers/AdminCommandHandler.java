@@ -30,31 +30,26 @@ import lombok.extern.slf4j.Slf4j;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import server.ItemInformationProvider;
-import server.TimerManager;
 import server.life.LifeFactory;
 import server.life.Monster;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.quest.Quest;
-import service.AccountService;
-import service.TransitionService;
+import service.BanService;
 import tools.PacketCreator;
 import tools.Randomizer;
 
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public final class AdminCommandHandler extends AbstractPacketHandler {
 
-    private final AccountService accountService;
-    private final TransitionService transitionService;
+    private final BanService banService;
 
-    public AdminCommandHandler(AccountService accountService, TransitionService transitionService) {
-        this.accountService = accountService;
-        this.transitionService = transitionService;
+    public AdminCommandHandler(BanService banService) {
+        this.banService = banService;
     }
 
     @Override
@@ -178,34 +173,13 @@ public final class AdminCommandHandler extends AbstractPacketHandler {
     private void handleBlock(InPacket p, Client c) {
         String victimName = p.readString();
         byte reason = p.readByte();
-        int duration = p.readInt();
+        int durationDays = p.readInt();
         String description = p.readString();
-        Character victim = c.getChannelServer().getPlayerStorage().getCharacterByName(victimName);
-        if (victim != null) {
-            banOnlineChr(c, victim, reason, duration, description);
-        } else if (Character.ban(victimName, c.getPlayer().getName() + " used /ban to ban", false)) { // TODO: find account id from chr name and ban
-            c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
-        } else {
-            c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
-        }
-    }
-
-    private void banOnlineChr(Client c, Character victim, byte reason, int durationDays, String description) {
-        victim.setBanned();
-        String readableTargetName = Character.makeMapleReadable(victim.getName());
-        String ip = victim.getClient().getRemoteAddress();
-        description += readableTargetName + " (IP: " + ip + ")";
-        int accountId = victim.getAccountID();
         if (durationDays == -1) {
-            accountService.permaBan(accountId, reason, description);
+            banService.permaBan(c, victimName, reason, description);
         } else {
             Duration duration = Duration.ofDays(durationDays);
-            accountService.tempBan(accountId, duration, reason, description);
+            banService.tempBan(c, victimName, duration, reason, description);
         }
-        victim.setBanned();
-        victim.sendPacket(PacketCreator.sendPolice(String.format("You have been blocked by the#b %s Police.#k", "Cosmic")));
-        TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false),
-                TimeUnit.SECONDS.toMillis(6));
-        c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
     }
 }

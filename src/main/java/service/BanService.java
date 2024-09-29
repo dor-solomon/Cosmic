@@ -1,22 +1,27 @@
 package service;
 
 import client.Character;
+import client.Client;
 import client.autoban.AutobanFactory;
 import config.YamlConfig;
+import lombok.extern.slf4j.Slf4j;
 import net.packet.Packet;
 import net.server.Server;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import server.TimerManager;
 import tools.PacketCreator;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class BanService {
-    private static final Logger log = LoggerFactory.getLogger(BanService.class);
+    private final AccountService accountService;
     private final TransitionService transitionService;
 
-    public BanService(TransitionService transitionService) {
+    public BanService(AccountService accountService, TransitionService transitionService) {
+        this.accountService = accountService;
         this.transitionService = transitionService;
     }
 
@@ -29,7 +34,8 @@ public class BanService {
             return;
         }
 
-        chr.ban(reason);
+        chr.setBanned();
+        accountService.ban(chr.getAccountID(), null, (byte) 0, reason);
 
         chr.sendPacket(PacketCreator.sendPolice("You have been blocked by the#b %s Police for HACK reason.#k".formatted("Cosmic")));
         TimerManager.getInstance().schedule(() -> transitionService.disconnect(chr.getClient(), false),
@@ -58,5 +64,51 @@ public class BanService {
 
     private boolean isExempt(Character chr) {
         return !YamlConfig.config.server.USE_AUTOBAN || chr.isGM() || chr.isBanned();
+    }
+
+    public void permaBan(Client c, String victimName, byte reason, String description) {
+        ban(c, victimName, null, reason, description);
+    }
+
+    public void tempBan(Client c, String victimName, Duration duration, byte reason, String description) {
+        ban(c, victimName, duration, reason, description);
+    }
+
+    // TODO: also ban ip and macs. Table "ipbans" and "macbans" (while taking "macfilters" into consideration).
+    // That's how it was done previously, anyway.
+    private void ban(Client c, String victimName, Duration duration, byte reason, String description) {
+        Character victim = c.getChannelServer().getPlayerStorage().getCharacterByName(victimName);
+
+        if (victim == null) {
+            Optional<Integer> foundAccountId = accountService.getAccountIdByChrName(victimName);
+            if (foundAccountId.isEmpty()) {
+                c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
+                return;
+            }
+
+            saveBan(foundAccountId.get(), duration, reason, description);
+        } else {
+            victim.setBanned();
+            String readableName = Character.makeMapleReadable(victimName);
+            String ip = victim.getClient().getRemoteAddress();
+            String enrichedDescription = "[%s] %s (IP: %s)".formatted(description, readableName, ip);
+            saveBan(victim.getAccountID(), duration, reason, enrichedDescription);
+            victim.sendPacket(PacketCreator.sendPolice("You have been banned by %s.".formatted(c.getPlayer().getName())));
+            TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false),
+                    TimeUnit.SECONDS.toMillis(5));
+        }
+
+        c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
+        Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "%s has been banned.".formatted(victimName)));
+    }
+
+    private void saveBan(int accountId, Duration duration, byte reason, String description) {
+        final Instant bannedUntil;
+        if (duration != null) {
+            bannedUntil = Instant.now().plus(duration);
+        } else {
+            bannedUntil = null;
+        }
+        accountService.ban(accountId, bannedUntil, reason, description);
     }
 }

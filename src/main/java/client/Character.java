@@ -736,18 +736,6 @@ public class Character extends AbstractCharacterObject {
         visibleMapObjects.add(mo);
     }
 
-    public void ban(String reason) {
-        setBanned();
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET banned = 1, banreason = ? WHERE id = ?")) {
-            ps.setString(1, reason);
-            ps.setInt(2, accountid);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static boolean ban(String id, String reason, boolean accountId) {
         try (Connection con = DatabaseConnection.getConnection()) {
             if (id.matches("/[0-9]{1,3}\\..*")) {

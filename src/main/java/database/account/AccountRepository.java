@@ -45,7 +45,7 @@ public class AccountRepository {
         }
     }
 
-    public Optional<Account> findIdByChrNameIgnoreCase(String name) {
+    public Optional<Integer> findIdByChrNameIgnoreCase(String name) {
         String sql = """
                 SELECT id
                 FROM account AS a
@@ -54,7 +54,7 @@ public class AccountRepository {
         try (Handle handle = connection.getHandle()) {
             return handle.createQuery(sql)
                     .bind("name", name)
-                    .mapTo(Account.class)
+                    .mapTo(Integer.class)
                     .findOne();
         }
     }

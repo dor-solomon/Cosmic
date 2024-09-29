@@ -829,6 +829,7 @@ public class Server {
         NoteService noteService = new NoteService(new NoteDao(connection));
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
+        BanService banService = new BanService(accountService, transitionService);
         ChannelDependencies channelDependencies = ChannelDependencies.builder()
                 .accountService(accountService)
                 .characterCreator(new CharacterCreator(connection, characterRepository))
@@ -839,10 +840,10 @@ public class Server {
                 .makerProcessor(new MakerProcessor(new MakerInfoProvider(new MakerRepository(connection))))
                 .dropProvider(dropProvider)
                 .commandsExecutor(new CommandsExecutor(new CommandContext(null, dropProvider, shopFactory,
-                        characterSaver, transitionService)))
+                        characterSaver, transitionService, banService)))
                 .shopFactory(shopFactory)
                 .transitionService(transitionService)
-                .banService(new BanService(transitionService))
+                .banService(banService)
                 .build();
 
         PacketProcessor.registerGameHandlerDependencies(channelDependencies);
