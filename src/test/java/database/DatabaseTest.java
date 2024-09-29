@@ -1,6 +1,7 @@
 package database;
 
 import client.CharacterStats;
+import client.LoginState;
 import config.ServerConfig;
 import config.YamlConfig;
 import database.account.Account;
@@ -101,6 +102,7 @@ public abstract class DatabaseTest {
                 .name("accountname")
                 .password("accountpassword")
                 .birthdate(LocalDate.now())
+                .loginState(LoginState.LOGGED_OUT)
                 .build();
         return new AccountRepository(connection).insert(account);
     }
