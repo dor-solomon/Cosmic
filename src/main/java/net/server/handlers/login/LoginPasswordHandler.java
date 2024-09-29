@@ -83,8 +83,11 @@ public final class LoginPasswordHandler implements PacketHandler {
         c.setHwid(new Hwid(HexTool.toCompactHexString(hwidNibbles)));
 
         if (!c.attemptLogin()) {
+            c.sendPacket(PacketCreator.getLoginFailed(10));
+            SessionCoordinator.getInstance().closeSession(c, false);
             return;
         }
+
         Optional<Account> foundAccount = accountService.getAccount(login);
         if (foundAccount.isEmpty()) {
             if (YamlConfig.config.server.AUTOMATIC_REGISTER) {
@@ -97,6 +100,12 @@ public final class LoginPasswordHandler implements PacketHandler {
         }
 
         Account account = foundAccount.get();
+
+        if (!correctPassword(pwd, account)) {
+            c.sendPacket(PacketCreator.getLoginFailed(4));
+            return;
+        }
+
         if (account.banned()) {
             c.sendPacket(PacketCreator.getLoginFailed(3));
             // TODO: send ban reason instead of login failed, something like this:
@@ -104,17 +113,12 @@ public final class LoginPasswordHandler implements PacketHandler {
             return;
         }
 
-        if (!correctPassword(pwd, account)) {
-            c.sendPacket(PacketCreator.getLoginFailed(4));
+        if (account.loginState() > LoginState.LOGGED_OUT) {
+            c.sendPacket(PacketCreator.getLoginFailed(7));
             return;
         }
 
         c.setAccount(account);
-
-        if (c.getLoginState(account) > LoginState.LOGGED_OUT) {
-            c.sendPacket(PacketCreator.getLoginFailed(7));
-            return;
-        }
 
         if (!account.acceptedTos()) {
             c.sendPacket(PacketCreator.getLoginFailed(23));

@@ -63,7 +63,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -502,12 +501,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public boolean attemptLogin() {
-        if (++failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
-            SessionCoordinator.getInstance().closeSession(this, false);
-            return false;
-        }
-
-        return true;
+        return ++failedLoginAttempts < MAX_FAILED_LOGIN_ATTEMPTS;
     }
 
     // TODO: check tempban directly on loaded account
@@ -588,32 +582,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return accId;
     }
 
-    public void updateLoginState(int newState) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = ?, lastlogin = ? WHERE id = ?")) {
-            // using sql currenttime here could potentially break the login, thanks Arnah for pointing this out
-
-            ps.setInt(1, newState);
-            ps.setTimestamp(2, new java.sql.Timestamp(Server.getInstance().getCurrentTime()));
-            ps.setInt(3, getAccID());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        if (newState == LoginState.LOGGED_OUT) {
-            loggedIn = false;
-            inServerTransition = false;
-            setAccID(0);
-        } else if (newState == LoginState.SERVER_TRANSITION) {
-            loggedIn = false;
-            inServerTransition = true;
-        } else {
-            loggedIn = true;
-            inServerTransition = false;
-        }
-    }
-
     public void setLoginState(int newState) {
         if (newState == LoginState.LOGGED_OUT) {
             loggedIn = false;
@@ -628,35 +596,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         } else {
             throw new IllegalArgumentException("Invalid login state: " + newState);
         }
-    }
-
-    public byte getLoginState(Account account) {
-        byte loginState = account.loginState();
-        if (loginState == LoginState.SERVER_TRANSITION && lastLoginOverThirtySecondsAgo(account)) {
-            loginState = LoginState.LOGGED_OUT;
-            updateLoginState(LoginState.LOGGED_OUT);
-        }
-
-        if (loginState == LoginState.LOGGED_IN) {
-            loggedIn = true;
-        } else if (loginState == LoginState.SERVER_TRANSITION) {
-            try (Connection con = DatabaseConnection.getConnection();
-                 PreparedStatement ps2 = con.prepareStatement("UPDATE accounts SET loggedin = 0 WHERE id = ?")) {
-                ps2.setInt(1, getAccID());
-                ps2.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-        return loginState;
-    }
-
-    private static boolean lastLoginOverThirtySecondsAgo(Account account) {
-        if (account.lastLogin() == null) {
-            return true;
-        }
-
-        return account.lastLogin().isBefore(LocalDateTime.now().minusSeconds(30));
     }
 
     public boolean checkBirthDate(Calendar date) {

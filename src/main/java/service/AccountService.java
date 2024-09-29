@@ -214,13 +214,17 @@ public class AccountService {
     }
 
     public boolean setLoggedIn(Client c) {
-        byte newState = LoginState.LOGGED_IN;
-        int currentState = c.getLoginState();
+        Account account = c.getAccount();
+        if (account == null) {
+            throw new IllegalStateException("Unable to set logged in - no account");
+        }
+
+        int currentState = account.loginState();
         if (currentState != LoginState.LOGGED_OUT && currentState != LoginState.SERVER_TRANSITION) {
             return false;
         }
 
-        setLoginState(c, newState);
+        setLoginState(c, LoginState.LOGGED_IN);
         return true;
     }
 
@@ -229,6 +233,7 @@ public class AccountService {
         setLoggedOut(c);
     }
 
+    // TODO: check "stuck" accounts periodically and log them out.
     public void setLoggedOut(Client c) {
         setLoginState(c, LoginState.LOGGED_OUT);
     }
