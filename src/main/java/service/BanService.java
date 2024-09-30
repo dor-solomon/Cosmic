@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.packet.Packet;
 import net.server.Server;
 import server.TimerManager;
+import server.ban.IpBanManager;
 import tools.PacketCreator;
 
 import java.time.Duration;
@@ -19,10 +20,12 @@ import java.util.concurrent.TimeUnit;
 public class BanService {
     private final AccountService accountService;
     private final TransitionService transitionService;
+    private final IpBanManager ipBanManager;
 
-    public BanService(AccountService accountService, TransitionService transitionService) {
+    public BanService(AccountService accountService, TransitionService transitionService, IpBanManager ipBanManager) {
         this.accountService = accountService;
         this.transitionService = transitionService;
+        this.ipBanManager = ipBanManager;
     }
 
     public void autoban(Character chr, AutobanFactory type, String reason) {
@@ -110,5 +113,14 @@ public class BanService {
             bannedUntil = null;
         }
         accountService.ban(accountId, bannedUntil, reason, description);
+    }
+
+    public boolean isBanned(Client c) {
+        return isIpBanned(c);
+    }
+
+    private boolean isIpBanned(Client c) {
+        String ip = c.getRemoteAddress();
+        return ip != null && ipBanManager.isBanned(ip);
     }
 }

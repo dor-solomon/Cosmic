@@ -45,6 +45,7 @@ import constants.net.ServerConstants;
 import database.PgDatabaseConfig;
 import database.PgDatabaseConnection;
 import database.account.AccountRepository;
+import database.ban.IpBanRepository;
 import database.character.CharacterLoader;
 import database.character.CharacterRepository;
 import database.character.CharacterSaver;
@@ -85,6 +86,7 @@ import server.CashShop.CashItemFactory;
 import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
+import server.ban.IpBanManager;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.quest.Quest;
@@ -716,6 +718,7 @@ public class Server {
         futures.add(initExecutor.submit(CashItemFactory::loadAllCashItems));
         futures.add(initExecutor.submit(Quest::loadAllQuests));
         futures.add(initExecutor.submit(SkillbookInformationProvider::loadAllSkillbookInformation));
+        futures.add(initExecutor.submit(channelDependencies.ipBanManager()::loadIpBans));
         initExecutor.shutdown();
 
         TimeZone.setDefault(TimeZone.getTimeZone(YamlConfig.config.server.TIMEZONE));
@@ -829,7 +832,8 @@ public class Server {
         NoteService noteService = new NoteService(new NoteDao(connection));
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
-        BanService banService = new BanService(accountService, transitionService);
+        IpBanManager ipBanManager = new IpBanManager(new IpBanRepository(connection));
+        BanService banService = new BanService(accountService, transitionService, ipBanManager);
         ChannelDependencies channelDependencies = ChannelDependencies.builder()
                 .accountService(accountService)
                 .characterCreator(new CharacterCreator(connection, characterRepository))
@@ -843,6 +847,7 @@ public class Server {
                         characterSaver, transitionService, banService)))
                 .shopFactory(shopFactory)
                 .transitionService(transitionService)
+                .ipBanManager(ipBanManager)
                 .banService(banService)
                 .build();
 

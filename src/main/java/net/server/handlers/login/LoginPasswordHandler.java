@@ -36,6 +36,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.AccountService;
+import service.BanService;
 import service.TransitionService;
 import tools.BCrypt;
 import tools.HexTool;
@@ -49,10 +50,13 @@ public final class LoginPasswordHandler implements PacketHandler {
 
     private final AccountService accountService;
     private final TransitionService transitionService;
+    private final BanService banService;
 
-    public LoginPasswordHandler(AccountService accountService, TransitionService transitionService) {
+    public LoginPasswordHandler(AccountService accountService, TransitionService transitionService,
+                                BanService banService) {
         this.accountService = accountService;
         this.transitionService = transitionService;
+        this.banService = banService;
     }
 
     @Override
@@ -110,7 +114,7 @@ public final class LoginPasswordHandler implements PacketHandler {
         }
 
         boolean banCheckDisabled = false;
-        if (!banCheckDisabled && (c.hasBannedIP() || c.hasBannedMac() || c.hasBannedHWID())) {
+        if (!banCheckDisabled && (banService.isBanned(c) || c.hasBannedMac() || c.hasBannedHWID())) {
             c.sendPacket(PacketCreator.getLoginFailed(3));
             return;
         }

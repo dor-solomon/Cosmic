@@ -22,8 +22,8 @@ class CharacterSaverTest extends DatabaseTest {
 
     @BeforeEach
     void reset() {
-        this.characterSaver = new CharacterSaver(pgConnection, new CharacterRepository(),
-                new MonsterCardRepository(pgConnection));
+        this.characterSaver = new CharacterSaver(connection, new CharacterRepository(),
+                new MonsterCardRepository(connection));
     }
 
     @Test
@@ -53,7 +53,7 @@ class CharacterSaverTest extends DatabaseTest {
                 SELECT level
                 FROM chr
                 WHERE id = :id""";
-        try (Handle handle = pgConnection.getHandle()) {
+        try (Handle handle = connection.getHandle()) {
             return handle.createQuery(sql)
                     .bind("id", chrId)
                     .mapTo(Integer.class)

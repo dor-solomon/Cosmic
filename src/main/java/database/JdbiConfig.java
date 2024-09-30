@@ -1,6 +1,7 @@
 package database;
 
 import database.account.AccountRowMapper;
+import database.ban.IpBanRowMapper;
 import database.drop.GlobalMonsterDropRowMapper;
 import database.drop.MonsterDropRowMapper;
 import database.maker.MakerIngredientRowMapper;
@@ -36,7 +37,8 @@ public final class JdbiConfig {
                 new GlobalMonsterDropRowMapper(),
                 new ShopRowMapper(),
                 new ShopItemRowMapper(),
-                new MonsterCardRowMapper()
+                new MonsterCardRowMapper(),
+                new IpBanRowMapper()
         );
     }
 }

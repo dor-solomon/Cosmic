@@ -315,25 +315,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return inServerTransition;
     }
 
-    // TODO: load ipbans on server start and query it on demand. This query should not be run on every login!
-    @Deprecated
-    public boolean hasBannedIP() {
-        boolean ret = false;
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM ipbans WHERE ? LIKE CONCAT(ip, '%')")) {
-            ps.setString(1, remoteAddress);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return ret;
-    }
-
     // TODO: load hwidbans on server start and query it on demand. This query should not be run on every login!
     @Deprecated
     public boolean hasBannedHWID() {

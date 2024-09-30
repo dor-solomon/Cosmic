@@ -38,14 +38,14 @@ public abstract class DatabaseTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:%s".formatted(POSTGRES_VERSION));
 
-    protected PgDatabaseConnection pgConnection;
+    protected PgDatabaseConnection connection;
     protected GeneratedIds testIds;
 
     @BeforeAll
-    void setUp() {
+    void setUpDatabase() {
         prepareMysqlConnection();
         runDbMigrations();
-        this.pgConnection = createPgConnection();
+        this.connection = createPgConnection();
     }
 
     // Not using this, but due to the nature of how the db connections are set up, the application requires
@@ -90,8 +90,8 @@ public abstract class DatabaseTest {
 
     @BeforeEach
     void insertTestData() {
-        int accountId = insertAccount(pgConnection);
-        try (Handle handle = pgConnection.getHandle()) {
+        int accountId = insertAccount(connection);
+        try (Handle handle = connection.getHandle()) {
             int chrId = insertChr(handle, accountId);
             this.testIds = new GeneratedIds(accountId, chrId);
         }
@@ -121,8 +121,8 @@ public abstract class DatabaseTest {
         List.of("chr", "account").forEach(this::clearTable);
     }
 
-    private void clearTable(String tableName) {
+    protected void clearTable(String tableName) {
         String sql = "DELETE FROM %s".formatted(tableName);
-        pgConnection.getHandle().execute(sql);
+        connection.getHandle().execute(sql);
     }
 }

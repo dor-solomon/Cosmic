@@ -8,6 +8,7 @@ import database.character.CharacterLoader;
 import database.character.CharacterSaver;
 import database.drop.DropProvider;
 import lombok.Builder;
+import server.ban.IpBanManager;
 import server.shop.ShopFactory;
 import service.AccountService;
 import service.BanService;
@@ -25,7 +26,7 @@ public record ChannelDependencies(
         CharacterCreator characterCreator, CharacterLoader characterLoader, CharacterSaver characterSaver,
         NoteService noteService, FredrickProcessor fredrickProcessor, MakerProcessor makerProcessor,
         DropProvider dropProvider, CommandsExecutor commandsExecutor, ShopFactory shopFactory,
-        TransitionService transitionService, BanService banService
+        TransitionService transitionService, IpBanManager ipBanManager, BanService banService
 ) {
 
     public ChannelDependencies {
@@ -40,6 +41,7 @@ public record ChannelDependencies(
         Objects.requireNonNull(commandsExecutor);
         Objects.requireNonNull(shopFactory);
         Objects.requireNonNull(transitionService);
+        Objects.requireNonNull(ipBanManager);
         Objects.requireNonNull(banService);
     }
 }
