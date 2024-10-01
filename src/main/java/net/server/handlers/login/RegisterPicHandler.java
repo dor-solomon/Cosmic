@@ -11,6 +11,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.AccountService;
+import service.BanService;
 import service.TransitionService;
 import tools.PacketCreator;
 
@@ -20,10 +21,12 @@ import java.net.UnknownHostException;
 public final class RegisterPicHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(RegisterPicHandler.class);
 
+    private final BanService banService;
     private final TransitionService transitionService;
     private final AccountService accountService;
 
-    public RegisterPicHandler(AccountService accountService, TransitionService transitionService) {
+    public RegisterPicHandler(BanService banService, AccountService accountService, TransitionService transitionService) {
+        this.banService = banService;
         this.accountService = accountService;
         this.transitionService = transitionService;
     }
@@ -47,6 +50,7 @@ public final class RegisterPicHandler extends AbstractPacketHandler {
 
         c.updateMacs(macs);
         c.updateHwid(hwid);
+        c.setHwid(hwid);
 
         AntiMulticlientResult res = SessionCoordinator.getInstance().attemptGameSession(c, c.getAccID(), hwid);
         if (res != AntiMulticlientResult.SUCCESS) {
@@ -54,7 +58,7 @@ public final class RegisterPicHandler extends AbstractPacketHandler {
             return;
         }
 
-        if (c.hasBannedMac() || c.hasBannedHWID()) {
+        if (banService.isBanned(c) || c.hasBannedMac()) {
             SessionCoordinator.getInstance().closeSession(c, true);
             return;
         }

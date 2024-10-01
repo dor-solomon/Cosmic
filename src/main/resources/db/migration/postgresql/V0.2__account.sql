@@ -30,5 +30,5 @@ GRANT SELECT, INSERT, UPDATE ON TABLE account TO ${server-username};
 GRANT USAGE ON SEQUENCE account_id_seq TO ${server-username};
 ALTER SEQUENCE account_id_seq RESTART WITH 1000;
 
--- INSERT INTO account (id, name, password, pin, pic, birthdate)
--- VALUES (1, 'admin', '$2y$12$aFD9BDeUocDMY1X4tDYDyeJw/HhkQwCQWs3KAY7gCaRG0cpqJcaL.', '0000', '000000', '2005-05-11');
+INSERT INTO account (id, name, password, pin, pic, birthdate, tos_accepted, chr_slots, login_state)
+VALUES (nextval('account_id_seq'), 'admin', '$2y$12$aFD9BDeUocDMY1X4tDYDyeJw/HhkQwCQWs3KAY7gCaRG0cpqJcaL.', '0000', '000000', '2005-05-11', true, 9, 0);

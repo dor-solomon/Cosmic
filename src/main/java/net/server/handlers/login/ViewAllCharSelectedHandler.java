@@ -31,6 +31,7 @@ import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import service.BanService;
 import service.TransitionService;
 import tools.PacketCreator;
 import tools.Randomizer;
@@ -41,9 +42,11 @@ import java.net.UnknownHostException;
 public final class ViewAllCharSelectedHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ViewAllCharSelectedHandler.class);
 
+    private final BanService banService;
     private final TransitionService transitionService;
 
-    public ViewAllCharSelectedHandler(TransitionService transitionService) {
+    public ViewAllCharSelectedHandler(BanService banService, TransitionService transitionService) {
+        this.banService = banService;
         this.transitionService = transitionService;
     }
 
@@ -76,8 +79,9 @@ public final class ViewAllCharSelectedHandler extends AbstractPacketHandler {
 
         c.updateMacs(macs);
         c.updateHwid(hwid);
+        c.setHwid(hwid);
 
-        if (c.hasBannedMac() || c.hasBannedHWID()) {
+        if (banService.isBanned(c) || c.hasBannedMac()) {
             SessionCoordinator.getInstance().closeSession(c, true);
             return;
         }

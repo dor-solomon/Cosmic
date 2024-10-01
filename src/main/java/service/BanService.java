@@ -7,7 +7,9 @@ import config.YamlConfig;
 import lombok.extern.slf4j.Slf4j;
 import net.packet.Packet;
 import net.server.Server;
+import net.server.coordinator.session.Hwid;
 import server.TimerManager;
+import server.ban.HwidBanManager;
 import server.ban.IpBanManager;
 import tools.PacketCreator;
 
@@ -21,11 +23,14 @@ public class BanService {
     private final AccountService accountService;
     private final TransitionService transitionService;
     private final IpBanManager ipBanManager;
+    private final HwidBanManager hwidBanManager;
 
-    public BanService(AccountService accountService, TransitionService transitionService, IpBanManager ipBanManager) {
+    public BanService(AccountService accountService, TransitionService transitionService, IpBanManager ipBanManager,
+                      HwidBanManager hwidBanManager) {
         this.accountService = accountService;
         this.transitionService = transitionService;
         this.ipBanManager = ipBanManager;
+        this.hwidBanManager = hwidBanManager;
     }
 
     public void autoban(Character chr, AutobanFactory type, String reason) {
@@ -116,11 +121,16 @@ public class BanService {
     }
 
     public boolean isBanned(Client c) {
-        return isIpBanned(c);
+        return isIpBanned(c) || isHwidBanned(c);
     }
 
     private boolean isIpBanned(Client c) {
         String ip = c.getRemoteAddress();
         return ip != null && ipBanManager.isBanned(ip);
+    }
+
+    private boolean isHwidBanned(Client c) {
+        Hwid hwid = c.getHwid();
+        return hwid != null && hwidBanManager.isBanned(hwid);
     }
 }

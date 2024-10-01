@@ -315,32 +315,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return inServerTransition;
     }
 
-    // TODO: load hwidbans on server start and query it on demand. This query should not be run on every login!
-    @Deprecated
-    public boolean hasBannedHWID() {
-        if (hwid == null) {
-            return false;
-        }
-
-        boolean ret = false;
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM hwidbans WHERE hwid LIKE ?")) {
-            ps.setString(1, hwid.hwid());
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs != null && rs.next()) {
-                    if (rs.getInt(1) > 0) {
-                        ret = true;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
     // TODO: load macbans on server start and query it on demand. This query should not be run on every login!
     @Deprecated
     public boolean hasBannedMac() {
@@ -490,8 +464,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     public void updateHwid(Hwid hwid) {
-        this.hwid = hwid;
-
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE accounts SET hwid = ? WHERE id = ?")) {
             ps.setString(1, hwid.hwid());

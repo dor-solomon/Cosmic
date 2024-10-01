@@ -11,6 +11,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.AccountService;
+import service.BanService;
 import service.TransitionService;
 import tools.PacketCreator;
 import tools.Randomizer;
@@ -21,10 +22,13 @@ import java.net.UnknownHostException;
 public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
     private static final Logger log = LoggerFactory.getLogger(ViewAllCharRegisterPicHandler.class);
 
+    private final BanService banService;
     private final AccountService accountService;
     private final TransitionService transitionService;
 
-    public ViewAllCharRegisterPicHandler(AccountService accountService, TransitionService transitionService) {
+    public ViewAllCharRegisterPicHandler(BanService banService, AccountService accountService,
+                                         TransitionService transitionService) {
+        this.banService = banService;
         this.accountService = accountService;
         this.transitionService = transitionService;
     }
@@ -49,8 +53,9 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
 
         c.updateMacs(mac);
         c.updateHwid(hwid);
+        c.setHwid(hwid);
 
-        if (c.hasBannedMac() || c.hasBannedHWID()) {
+        if (banService.isBanned(c) || c.hasBannedMac()) {
             SessionCoordinator.getInstance().closeSession(c, true);
             return;
         }
