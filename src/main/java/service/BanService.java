@@ -11,11 +11,13 @@ import net.server.coordinator.session.Hwid;
 import server.TimerManager;
 import server.ban.HwidBanManager;
 import server.ban.IpBanManager;
+import server.ban.MacBanManager;
 import tools.PacketCreator;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -23,13 +25,15 @@ public class BanService {
     private final AccountService accountService;
     private final TransitionService transitionService;
     private final IpBanManager ipBanManager;
+    private final MacBanManager macBanManager;
     private final HwidBanManager hwidBanManager;
 
     public BanService(AccountService accountService, TransitionService transitionService, IpBanManager ipBanManager,
-                      HwidBanManager hwidBanManager) {
+                      MacBanManager macBanManager, HwidBanManager hwidBanManager) {
         this.accountService = accountService;
         this.transitionService = transitionService;
         this.ipBanManager = ipBanManager;
+        this.macBanManager = macBanManager;
         this.hwidBanManager = hwidBanManager;
     }
 
@@ -121,7 +125,7 @@ public class BanService {
     }
 
     public boolean isBanned(Client c) {
-        return isIpBanned(c) || isHwidBanned(c);
+        return isIpBanned(c) || isHwidBanned(c) || isMacBanned(c);
     }
 
     private boolean isIpBanned(Client c) {
@@ -132,5 +136,10 @@ public class BanService {
     private boolean isHwidBanned(Client c) {
         Hwid hwid = c.getHwid();
         return hwid != null && hwidBanManager.isBanned(hwid);
+    }
+
+    private boolean isMacBanned(Client c) {
+        Set<String> macs = c.getMacs();
+        return macs.stream().anyMatch(macBanManager::isBanned);
     }
 }

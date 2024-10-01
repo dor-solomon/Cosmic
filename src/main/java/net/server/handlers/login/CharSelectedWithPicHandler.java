@@ -59,7 +59,7 @@ public class CharSelectedWithPicHandler extends AbstractPacketHandler {
         c.updateHwid(hwid);
         c.setHwid(hwid);
 
-        if (banService.isBanned(c) || c.hasBannedMac()) {
+        if (banService.isBanned(c)) {
             SessionCoordinator.getInstance().closeSession(c, true);
             return;
         }

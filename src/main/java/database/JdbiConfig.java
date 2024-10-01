@@ -3,6 +3,7 @@ package database;
 import database.account.AccountRowMapper;
 import database.ban.HwidBanRowMapper;
 import database.ban.IpBanRowMapper;
+import database.ban.MacBanRowMapper;
 import database.drop.GlobalMonsterDropRowMapper;
 import database.drop.MonsterDropRowMapper;
 import database.maker.MakerIngredientRowMapper;
@@ -40,6 +41,7 @@ public final class JdbiConfig {
                 new ShopItemRowMapper(),
                 new MonsterCardRowMapper(),
                 new IpBanRowMapper(),
+                new MacBanRowMapper(),
                 new HwidBanRowMapper()
         );
     }

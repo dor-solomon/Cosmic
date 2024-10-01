@@ -85,7 +85,7 @@ public final class CharSelectedHandler extends AbstractPacketHandler {
             return;
         }
 
-        if (banService.isBanned(c) || c.hasBannedMac()) {
+        if (banService.isBanned(c)) {
             SessionCoordinator.getInstance().closeSession(c, true);
             return;
         }

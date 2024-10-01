@@ -315,42 +315,6 @@ public class Client extends ChannelInboundHandlerAdapter {
         return inServerTransition;
     }
 
-    // TODO: load macbans on server start and query it on demand. This query should not be run on every login!
-    @Deprecated
-    public boolean hasBannedMac() {
-        if (macs.isEmpty()) {
-            return false;
-        }
-        boolean ret = false;
-        int i;
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM macbans WHERE mac IN (");
-        for (i = 0; i < macs.size(); i++) {
-            sql.append("?");
-            if (i != macs.size() - 1) {
-                sql.append(", ");
-            }
-        }
-        sql.append(")");
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
-            i = 0;
-            for (String mac : macs) {
-                ps.setString(++i, mac);
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                if (rs.getInt(1) > 0) {
-                    ret = true;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return ret;
-    }
-
     // TODO: Recode to close statements...
     // Only used from ban command.
     private void loadMacsIfNescessary() throws SQLException {

@@ -47,6 +47,7 @@ import database.PgDatabaseConnection;
 import database.account.AccountRepository;
 import database.ban.HwidBanRepository;
 import database.ban.IpBanRepository;
+import database.ban.MacBanRepository;
 import database.character.CharacterLoader;
 import database.character.CharacterRepository;
 import database.character.CharacterSaver;
@@ -89,6 +90,7 @@ import server.ThreadManager;
 import server.TimerManager;
 import server.ban.HwidBanManager;
 import server.ban.IpBanManager;
+import server.ban.MacBanManager;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.quest.Quest;
@@ -721,6 +723,7 @@ public class Server {
         futures.add(initExecutor.submit(Quest::loadAllQuests));
         futures.add(initExecutor.submit(SkillbookInformationProvider::loadAllSkillbookInformation));
         futures.add(initExecutor.submit(channelDependencies.ipBanManager()::loadIpBans));
+        futures.add(initExecutor.submit(channelDependencies.macBanManager()::loadMacBans));
         futures.add(initExecutor.submit(channelDependencies.hwidBanManager()::loadHwidBans));
         initExecutor.shutdown();
 
@@ -836,8 +839,10 @@ public class Server {
         DropProvider dropProvider = new DropProvider(new DropRepository(connection));
         ShopFactory shopFactory = new ShopFactory(new ShopDao(connection));
         IpBanManager ipBanManager = new IpBanManager(new IpBanRepository(connection));
+        MacBanManager macBanManager = new MacBanManager(new MacBanRepository(connection));
         HwidBanManager hwidBanManager = new HwidBanManager(new HwidBanRepository(connection));
-        BanService banService = new BanService(accountService, transitionService, ipBanManager, hwidBanManager);
+        BanService banService = new BanService(accountService, transitionService, ipBanManager, macBanManager,
+                hwidBanManager);
         ChannelDependencies channelDependencies = ChannelDependencies.builder()
                 .accountService(accountService)
                 .characterCreator(new CharacterCreator(connection, characterRepository))
@@ -852,6 +857,7 @@ public class Server {
                 .shopFactory(shopFactory)
                 .transitionService(transitionService)
                 .ipBanManager(ipBanManager)
+                .macBanManager(macBanManager)
                 .hwidBanManager(hwidBanManager)
                 .banService(banService)
                 .build();
