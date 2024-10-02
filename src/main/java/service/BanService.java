@@ -91,27 +91,41 @@ public class BanService {
     private void ban(Client c, String victimName, Duration duration, byte reason, String description) {
         Character victim = c.getChannelServer().getPlayerStorage().getCharacterByName(victimName);
 
+        boolean success;
         if (victim == null) {
-            Optional<Integer> foundAccountId = accountService.getAccountIdByChrName(victimName);
-            if (foundAccountId.isEmpty()) {
-                c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
-                return;
-            }
-
-            saveBan(foundAccountId.get(), duration, reason, description);
+            success = banOfflineChr(victimName, duration, reason, description);
         } else {
-            victim.setBanned();
-            String readableName = Character.makeMapleReadable(victimName);
-            String ip = victim.getClient().getRemoteAddress();
-            String enrichedDescription = "[%s] %s (IP: %s)".formatted(description, readableName, ip);
-            saveBan(victim.getAccountID(), duration, reason, enrichedDescription);
-            victim.sendPacket(PacketCreator.sendPolice("You have been banned by %s.".formatted(c.getPlayer().getName())));
-            TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false),
-                    TimeUnit.SECONDS.toMillis(5));
+            success = banOnlineChr(c, victim, duration, reason, description);
         }
 
+        if (!success) {
+            c.sendPacket(PacketCreator.getGMEffect(6, (byte) 1));
+            return;
+        }
         c.sendPacket(PacketCreator.getGMEffect(4, (byte) 0));
         Server.getInstance().broadcastMessage(c.getWorld(), PacketCreator.serverNotice(6, "%s has been banned.".formatted(victimName)));
+    }
+
+    private boolean banOfflineChr(String victimName, Duration duration, byte reason, String description) {
+        Optional<Integer> foundAccountId = accountService.getAccountIdByChrName(victimName);
+        if (foundAccountId.isEmpty()) {
+            return false;
+        }
+
+        saveBan(foundAccountId.get(), duration, reason, description);
+        return true;
+    }
+
+    private boolean banOnlineChr(Client c, Character victim, Duration duration, byte reason, String description) {
+        victim.setBanned();
+        String readableName = Character.makeMapleReadable(victim.getName());
+        String ip = victim.getClient().getRemoteAddress();
+        String enrichedDescription = "[%s] %s (IP: %s)".formatted(description, readableName, ip);
+        saveBan(victim.getAccountID(), duration, reason, enrichedDescription);
+        victim.sendPacket(PacketCreator.sendPolice("You have been banned by %s.".formatted(c.getPlayer().getName())));
+        TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false),
+                TimeUnit.SECONDS.toMillis(5));
+        return true;
     }
 
     private void saveBan(int accountId, Duration duration, byte reason, String description) {
