@@ -39,4 +39,15 @@ public class HwidBanRepository {
             return false;
         }
     }
+
+    public void deleteHwidBan(String hwid) {
+        String sql = """
+                DELETE FROM hwid_ban
+                WHERE hwid = :hwid""";
+        try (Handle handle = connection.getHandle()) {
+            handle.createUpdate(sql)
+                    .bind("hwid", hwid)
+                    .execute();
+        }
+    }
 }

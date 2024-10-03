@@ -37,7 +37,7 @@ class MacBanManagerTest extends DatabaseTest {
         macBanManager.loadMacBans();
         assertFalse(macBanManager.isBanned(mac));
 
-        macBanRepository.saveMacBan(AnyValues.integer(), mac);
+        macBanRepository.saveMacBan(mac, AnyValues.integer());
         macBanManager.loadMacBans();
 
         assertTrue(macBanManager.isBanned(mac));

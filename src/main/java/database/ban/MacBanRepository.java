@@ -28,18 +28,28 @@ public class MacBanRepository {
         }
     }
 
-    public boolean saveMacBan(int accountId, String mac) {
+    public void saveMacBan(String mac, int accountId) {
         String sql = """
                 INSERT INTO mac_ban (account_id, mac)
                 VALUES (:accountId, :mac)""";
         try (Handle handle = connection.getHandle()) {
-            return handle.createUpdate(sql)
+            handle.createUpdate(sql)
                     .bind("accountId", accountId)
                     .bind("mac", mac)
-                    .execute() > 0;
+                    .execute();
         } catch (Exception e) {
             log.error("Failed to save mac ban. The mac is already banned? accountId: {}, mac: {}", accountId, mac, e);
-            return false;
+        }
+    }
+
+    public void deleteMacBan(String mac) {
+        String sql = """
+                DELETE FROM mac_ban
+                WHERE mac = :mac""";
+        try (Handle handle = connection.getHandle()) {
+            handle.createUpdate(sql)
+                    .bind("mac", mac)
+                    .execute();
         }
     }
 }

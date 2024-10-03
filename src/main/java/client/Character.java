@@ -734,45 +734,6 @@ public class Character extends AbstractCharacterObject {
         visibleMapObjects.add(mo);
     }
 
-    public static boolean ban(String id, String reason, boolean accountId) {
-        try (Connection con = DatabaseConnection.getConnection()) {
-            if (id.matches("/[0-9]{1,3}\\..*")) {
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO ipbans VALUES (DEFAULT, ?)")) {
-                    ps.setString(1, id);
-                    ps.executeUpdate();
-                    return true;
-                }
-            }
-
-            final String query;
-            if (accountId) {
-                query = "SELECT id FROM accounts WHERE name = ?";
-            } else {
-                query = "SELECT accountid FROM characters WHERE name = ?";
-            }
-
-            boolean ret = false;
-            try (PreparedStatement ps = con.prepareStatement(query)) {
-                ps.setString(1, id);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        try (PreparedStatement ps2 = con.prepareStatement("UPDATE accounts SET banned = 1, banreason = ? WHERE id = ?")) {
-                            ps2.setString(1, reason);
-                            ps2.setInt(2, rs.getInt(1));
-                            ps2.executeUpdate();
-                        }
-                        ret = true;
-                    }
-                }
-            }
-            return ret;
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return false;
-    }
-
     public int calculateMaxBaseDamage(int watk, WeaponType weapon) {
         int mainstat, secondarystat;
         if (getJob().isA(Job.THIEF) && weapon == WeaponType.DAGGER_OTHER) {

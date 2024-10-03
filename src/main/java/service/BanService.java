@@ -182,8 +182,8 @@ public class BanService {
         int accountId = foundAccount.get().id();
         accountService.unban(accountId);
         ipBanManager.unbanAccountIps(accountId);
-//        macBanManager.unbanAccountMacs(accountId);
-//        hwidBanManager.unbanAccountHwids(accountId);
+        macBanManager.unbanAccountMacs(accountId);
+        hwidBanManager.unbanAccountHwids(accountId);
         return true;
     }
 
