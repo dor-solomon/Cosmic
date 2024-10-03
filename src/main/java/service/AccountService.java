@@ -95,6 +95,10 @@ public class AccountService {
         return accountRepository.findByChrNameIgnoreCase(chrName);
     }
 
+    public void setAllLoggedOut() {
+        accountRepository.setAllLoginState(LoginState.LOGGED_OUT);
+    }
+
     public boolean acceptTos(int accountId) {
         acceptTosMysql(accountId);
         acceptTosPostgres(accountId);

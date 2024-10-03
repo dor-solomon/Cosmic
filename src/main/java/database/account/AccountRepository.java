@@ -61,6 +61,17 @@ public class AccountRepository {
         }
     }
 
+    public void setAllLoginState(LoginState loginState) {
+        String sql = """
+                UPDATE account
+                SET login_state = :loginState""";
+        try (Handle handle = connection.getHandle()) {
+            handle.createUpdate(sql)
+                    .bind("loginState", loginState.getValue())
+                    .execute();
+        }
+    }
+
     public Integer insert(Account account) {
         String sql = """
                 INSERT INTO account (name, password, birthdate, chr_slots, login_state)

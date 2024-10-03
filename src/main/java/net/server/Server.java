@@ -731,7 +731,7 @@ public class Server {
 
         final int worldCount = Math.min(GameConstants.WORLD_NAMES.length, YamlConfig.config.server.WORLDS);
         try (Connection con = DatabaseConnection.getConnection()) {
-            setAllLoggedOut(con);
+            channelDependencies.accountService().setAllLoggedOut();
             setAllMerchantsInactive(con);
             cleanNxcodeCoupons(con);
             loadCouponRates(con);
@@ -871,12 +871,6 @@ public class Server {
         LoginServer loginServer = new LoginServer(port, transitionService);
         loginServer.start();
         return loginServer;
-    }
-
-    private static void setAllLoggedOut(Connection con) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = 0")) {
-            ps.executeUpdate();
-        }
     }
 
     private static void setAllMerchantsInactive(Connection con) throws SQLException {
