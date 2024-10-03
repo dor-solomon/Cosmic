@@ -27,10 +27,6 @@ import client.Character;
 import client.Client;
 import client.command.Command;
 import client.command.CommandContext;
-import tools.DatabaseConnection;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
 public class UnBanCommand extends Command {
     {
@@ -45,25 +41,12 @@ public class UnBanCommand extends Command {
             return;
         }
 
-        try (Connection con = DatabaseConnection.getConnection()) {
-            int aid = Character.getAccountIdByName(params[0]);
-
-            try (PreparedStatement p = con.prepareStatement("UPDATE accounts SET banned = -1 WHERE id = " + aid)) {
-                p.executeUpdate();
-            }
-
-            try (PreparedStatement p = con.prepareStatement("DELETE FROM ipbans WHERE aid = " + aid)) {
-                p.executeUpdate();
-            }
-
-            try (PreparedStatement p = con.prepareStatement("DELETE FROM macbans WHERE aid = " + aid)) {
-                p.executeUpdate();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            player.message("Failed to unban " + params[0]);
+        String chrName = params[0];
+        if (!ctx.banService().unban(chrName)) {
+            player.message("Failed to unban " + chrName);
             return;
         }
-        player.message("Unbanned " + params[0]);
+
+        player.message("Unbanned " + chrName);
     }
 }

@@ -317,7 +317,11 @@ public class AccountService {
     }
 
     public boolean ban(int accountId, Instant bannedUntil, byte banReason, String description) {
-        return accountRepository.setBanned(accountId, bannedUntil, banReason, description);
+        return accountRepository.setBanned(accountId, true, bannedUntil, banReason, description);
+    }
+
+    public boolean unban(int accountId) {
+        return accountRepository.setBanned(accountId, false, null, null, null);
     }
 
 }

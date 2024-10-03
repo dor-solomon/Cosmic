@@ -5,7 +5,7 @@ CREATE TABLE ip_ban
     created_at timestamp DEFAULT now() NOT NULL,
     PRIMARY KEY (ip)
 );
-GRANT SELECT, INSERT ON TABLE ip_ban TO ${server-username};
+GRANT SELECT, INSERT, DELETE ON TABLE ip_ban TO ${server-username};
 
 CREATE TABLE hwid_ban
 (
@@ -14,7 +14,7 @@ CREATE TABLE hwid_ban
     created_at timestamp DEFAULT now() NOT NULL,
     PRIMARY KEY (hwid)
 );
-GRANT SELECT, INSERT ON TABLE hwid_ban TO ${server-username};
+GRANT SELECT, INSERT, DELETE ON TABLE hwid_ban TO ${server-username};
 
 CREATE TABLE mac_ban
 (
@@ -23,4 +23,4 @@ account_id integer,
     created_at timestamp DEFAULT now() NOT NULL,
     PRIMARY KEY (mac)
 );
-GRANT SELECT, INSERT ON TABLE mac_ban TO ${server-username};
+GRANT SELECT, INSERT, DELETE ON TABLE mac_ban TO ${server-username};

@@ -37,7 +37,7 @@ class IpBanManagerTest extends DatabaseTest {
         ipBanManager.loadIpBans();
         assertFalse(ipBanManager.isBanned(ip));
 
-        ipBanRepository.saveIpBan(AnyValues.integer(), ip);
+        ipBanRepository.saveIpBan(ip, AnyValues.integer());
         ipBanManager.loadIpBans();
 
         assertTrue(ipBanManager.isBanned(ip));

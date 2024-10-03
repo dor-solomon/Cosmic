@@ -157,14 +157,15 @@ public class AccountRepository {
         }
     }
 
-    public boolean setBanned(int accountId, Instant bannedUntil, byte banReason, String description) {
+    public boolean setBanned(int accountId, boolean banned, Instant bannedUntil, Byte banReason, String description) {
         String sql = """
                 UPDATE account
-                SET banned = true, banned_until = :bannedUntil, ban_reason = :banReason, ban_description = :banDescription
+                SET banned = :banned, banned_until = :bannedUntil, ban_reason = :banReason, ban_description = :banDescription
                 WHERE id = :id""";
         try (Handle handle = connection.getHandle()) {
             return handle.createUpdate(sql)
                     .bind("id", accountId)
+                    .bind("banned", banned)
                     .bind("bannedUntil", bannedUntil)
                     .bind("banReason", banReason)
                     .bind("banDescription", description)

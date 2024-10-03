@@ -28,7 +28,7 @@ public class IpBanRepository {
         }
     }
 
-    public boolean saveIpBan(int accountId, String ip) {
+    public boolean saveIpBan(String ip, int accountId) {
         String sql = """
                 INSERT INTO ip_ban (account_id, ip)
                 VALUES (:accountId, :ip)""";
@@ -40,6 +40,17 @@ public class IpBanRepository {
         } catch (Exception e) {
             log.error("Failed to save ip ban. The ip is already banned? accountId: {}, ip: {}", accountId, ip, e);
             return false;
+        }
+    }
+
+    public void deleteIpBan(String ip) {
+        String sql = """
+                DELETE FROM ip_ban
+                WHERE ip = :ip""";
+        try (Handle handle = connection.getHandle()) {
+            handle.createUpdate(sql)
+                    .bind("ip", ip)
+                    .execute();
         }
     }
 }

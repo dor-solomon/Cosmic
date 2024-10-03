@@ -173,6 +173,20 @@ public class BanService {
         hwidBanManager.banHwid(hwid, accountId);
     }
 
+    public boolean unban(String chrName) {
+        Optional<Account> foundAccount = accountService.getAccountIdByChrName(chrName);
+        if (foundAccount.isEmpty()) {
+            return false;
+        }
+
+        int accountId = foundAccount.get().id();
+        accountService.unban(accountId);
+        ipBanManager.unbanAccountIps(accountId);
+//        macBanManager.unbanAccountMacs(accountId);
+//        hwidBanManager.unbanAccountHwids(accountId);
+        return true;
+    }
+
     public boolean isBanned(Client c) {
         return isIpBanned(c) || isHwidBanned(c) || isMacBanned(c);
     }
