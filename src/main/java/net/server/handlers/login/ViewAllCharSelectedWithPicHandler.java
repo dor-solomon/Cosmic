@@ -1,6 +1,7 @@
 package net.server.handlers.login;
 
 import client.Client;
+import lombok.extern.slf4j.Slf4j;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
@@ -8,8 +9,7 @@ import net.server.coordinator.session.Hwid;
 import net.server.coordinator.session.SessionCoordinator;
 import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import net.server.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import service.AccountService;
 import service.BanService;
 import service.TransitionService;
 import tools.PacketCreator;
@@ -18,13 +18,15 @@ import tools.Randomizer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+@Slf4j
 public class ViewAllCharSelectedWithPicHandler extends AbstractPacketHandler {
-    private static final Logger log = LoggerFactory.getLogger(ViewAllCharSelectedWithPicHandler.class);
-
+    private final AccountService accountService;
     private final BanService banService;
     private final TransitionService transitionService;
 
-    public ViewAllCharSelectedWithPicHandler(BanService banService, TransitionService transitionService) {
+    public ViewAllCharSelectedWithPicHandler(AccountService accountService, BanService banService,
+                                             TransitionService transitionService) {
+        this.accountService = accountService;
         this.banService = banService;
         this.transitionService = transitionService;
     }
@@ -58,9 +60,9 @@ public class ViewAllCharSelectedWithPicHandler extends AbstractPacketHandler {
             return;
         }
 
-        c.updateMacs(macs);
-        c.updateHwid(hwid);
         c.setHwid(hwid);
+        c.setMacs(macs);
+        accountService.setIpAndMacsAndHwidAsync(c.getAccID(), c.getRemoteAddress(), macs, hwid);
 
         if (banService.isBanned(c)) {
             SessionCoordinator.getInstance().closeSession(c, true);

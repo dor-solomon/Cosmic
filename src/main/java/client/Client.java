@@ -69,7 +69,6 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -269,6 +268,13 @@ public class Client extends ChannelInboundHandlerAdapter {
         this.hwid = hwid;
     }
 
+    public void setMacs(String macs) {
+        if (macs == null || macs.isEmpty()) {
+            throw new IllegalArgumentException("macs cannot be empty");
+        }
+        this.macs.addAll(Arrays.asList(macs.split(", ")));
+    }
+
     public String getRemoteAddress() {
         return remoteAddress;
     }
@@ -425,39 +431,6 @@ public class Client extends ChannelInboundHandlerAdapter {
     public boolean wasRecentlyBanned() {
         Instant recentThreshold = Instant.now().minus(Duration.ofDays(30));
         return account != null && account.bannedUntil() != null && account.bannedUntil().isAfter(recentThreshold);
-    }
-
-    public void updateHwid(Hwid hwid) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET hwid = ? WHERE id = ?")) {
-            ps.setString(1, hwid.hwid());
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void updateMacs(String macData) {
-        macs.addAll(Arrays.asList(macData.split(", ")));
-        StringBuilder newMacData = new StringBuilder();
-        Iterator<String> iter = macs.iterator();
-        while (iter.hasNext()) {
-            String cur = iter.next();
-            newMacData.append(cur);
-            if (iter.hasNext()) {
-                newMacData.append(", ");
-            }
-        }
-
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE accounts SET macs = ? WHERE id = ?")) {
-            ps.setString(1, newMacData.toString());
-            ps.setInt(2, accId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public void setAccID(int id) {

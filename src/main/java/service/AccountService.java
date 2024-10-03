@@ -7,7 +7,9 @@ import database.account.Account;
 import database.account.AccountRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.server.Server;
+import net.server.coordinator.session.Hwid;
 import net.server.coordinator.session.SessionCoordinator;
+import server.TimerManager;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 
@@ -299,6 +301,19 @@ public class AccountService {
         if (!success) {
             log.warn("Failed to set login state - account:{}, newState:{}, loginTime:{}", accountId, newState, loginTime);
         }
+    }
+
+    public void setIpAndMacsAndHwidAsync(int accountId, final String ip, final String macs, Hwid hwid) {
+        final String hwidToSave = hwid != null ? hwid.hwid() : null;
+        TimerManager.getInstance().schedule(() -> {
+            try {
+                accountRepository.setIpAndMacsAndHwid(accountId, ip, hwidToSave, macs);
+            } catch (Exception e) {
+                log.error("Failed to save ip: {}, macs: {}, hwid: {} for accountId: {}", ip, hwidToSave, macs,
+                        accountId, e);
+            }
+        }, 0);
+
     }
 
     public boolean ban(int accountId, Instant bannedUntil, byte banReason, String description) {

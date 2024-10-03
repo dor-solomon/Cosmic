@@ -1,6 +1,7 @@
 package net.server.handlers.login;
 
 import client.Client;
+import lombok.extern.slf4j.Slf4j;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
@@ -8,8 +9,6 @@ import net.server.coordinator.session.Hwid;
 import net.server.coordinator.session.SessionCoordinator;
 import net.server.coordinator.session.SessionCoordinator.AntiMulticlientResult;
 import net.server.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import service.AccountService;
 import service.BanService;
 import service.TransitionService;
@@ -19,9 +18,8 @@ import tools.Randomizer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+@Slf4j
 public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
-    private static final Logger log = LoggerFactory.getLogger(ViewAllCharRegisterPicHandler.class);
-
     private final BanService banService;
     private final AccountService accountService;
     private final TransitionService transitionService;
@@ -39,7 +37,7 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
         int charId = p.readInt();
         p.readInt(); // please don't let the client choose which world they should login
 
-        String mac = p.readString();
+        String macs = p.readString();
         String hostString = p.readString();
 
         final Hwid hwid;
@@ -51,9 +49,9 @@ public final class ViewAllCharRegisterPicHandler extends AbstractPacketHandler {
             return;
         }
 
-        c.updateMacs(mac);
-        c.updateHwid(hwid);
         c.setHwid(hwid);
+        c.setMacs(macs);
+        accountService.setIpAndMacsAndHwidAsync(c.getAccID(), c.getRemoteAddress(), macs, hwid);
 
         if (banService.isBanned(c)) {
             SessionCoordinator.getInstance().closeSession(c, true);

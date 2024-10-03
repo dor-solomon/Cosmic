@@ -169,4 +169,19 @@ public class AccountRepository {
                     .execute() > 0;
         }
     }
+
+    public void setIpAndMacsAndHwid(int accountId, String ip, String hwid, String macs) {
+        String sql = """
+                UPDATE account
+                SET ip = :ip, macs = :macs, hwid = :hwid
+                WHERE id = :id""";
+        try (Handle handle = connection.getHandle()) {
+            handle.createUpdate(sql)
+                    .bind("id", accountId)
+                    .bind("ip", ip)
+                    .bind("hwid", hwid)
+                    .bind("macs", macs)
+                    .execute();
+        }
+    }
 }
