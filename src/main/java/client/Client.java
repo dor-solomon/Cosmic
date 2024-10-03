@@ -52,14 +52,10 @@ import scripting.quest.QuestActionManager;
 import scripting.quest.QuestScriptManager;
 import server.TimerManager;
 import server.life.Monster;
-import tools.DatabaseConnection;
 import tools.PacketCreator;
 
 import javax.script.ScriptEngine;
 import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -69,8 +65,6 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -319,61 +313,6 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public boolean isInTransition() {
         return inServerTransition;
-    }
-
-    // TODO: Recode to close statements...
-    // Only used from ban command.
-    private void loadMacsIfNescessary() throws SQLException {
-        if (macs.isEmpty()) {
-            try (Connection con = DatabaseConnection.getConnection();
-                 PreparedStatement ps = con.prepareStatement("SELECT macs FROM accounts WHERE id = ?")) {
-                ps.setInt(1, accId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        for (String mac : rs.getString("macs").split(", ")) {
-                            if (!mac.equals("")) {
-                                macs.add(mac);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void banMacs() {
-        try {
-            loadMacsIfNescessary();
-
-            List<String> filtered = new LinkedList<>();
-            try (Connection con = DatabaseConnection.getConnection()) {
-                try (PreparedStatement ps = con.prepareStatement("SELECT filter FROM macfilters");
-                     ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        filtered.add(rs.getString("filter"));
-                    }
-                }
-
-                try (PreparedStatement ps = con.prepareStatement("INSERT INTO macbans (mac, aid) VALUES (?, ?)")) {
-                    for (String mac : macs) {
-                        boolean matched = false;
-                        for (String filter : filtered) {
-                            if (mac.matches(filter)) {
-                                matched = true;
-                                break;
-                            }
-                        }
-                        if (!matched) {
-                            ps.setString(1, mac);
-                            ps.setString(2, String.valueOf(getAccID()));
-                            ps.executeUpdate();
-                        }
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public void setPin(String pin) {

@@ -174,7 +174,7 @@ public class TransitionService {
             }
         }
 
-        SessionCoordinator.getInstance().closeSession(c, false);
+        SessionCoordinator.getInstance().closeSession(c, shutdown);
 
 
         if (!c.isInTransition() && c.isLoggedIn()) {

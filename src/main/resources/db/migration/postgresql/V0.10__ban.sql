@@ -14,7 +14,7 @@ CREATE TABLE hwid_ban
     created_at timestamp DEFAULT now() NOT NULL,
     PRIMARY KEY (hwid)
 );
-GRANT SELECT ON TABLE hwid_ban TO ${server-username};
+GRANT SELECT, INSERT ON TABLE hwid_ban TO ${server-username};
 
 CREATE TABLE mac_ban
 (

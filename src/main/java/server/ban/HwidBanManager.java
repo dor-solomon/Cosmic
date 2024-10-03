@@ -46,4 +46,11 @@ public class HwidBanManager {
     public synchronized boolean isBanned(Hwid hwid) {
         return bannedHwids.contains(hwid);
     }
+
+    public synchronized void banHwid(Hwid hwid, int accountId) {
+        if (hwid == null) {
+            throw new IllegalArgumentException("hwid cannot be null");
+        }
+        hwidBanRepository.saveHwidBan(hwid.hwid(), accountId);
+    }
 }

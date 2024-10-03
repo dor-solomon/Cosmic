@@ -11,6 +11,10 @@ import java.util.Optional;
  * @author Ponk
  */
 public class AccountRepository {
+    private static final String SELECT_ACCOUNT_COLS = "a.id, a.name, password, pin, pic, birthdate, a.gender, " +
+            "tos_accepted, chr_slots, login_state, last_login, banned, banned_until, ban_reason, ban_description, " +
+            "ip, macs, hwid";
+
     private final PgDatabaseConnection connection;
 
     public AccountRepository(PgDatabaseConnection connection) {
@@ -19,10 +23,9 @@ public class AccountRepository {
 
     public Optional<Account> findByNameIgnoreCase(String name) {
         String sql = """
-                SELECT id, name, password, pin, pic, birthdate, gender, tos_accepted, chr_slots, login_state,
-                    last_login, banned, banned_until, ban_reason, ban_description
-                FROM account
-                WHERE lower(name) = lower(:name)""";
+                SELECT %s
+                FROM account AS a
+                WHERE lower(name) = lower(:name)""".formatted(SELECT_ACCOUNT_COLS);
         try (Handle handle = connection.getHandle()) {
             return handle.createQuery(sql)
                     .bind("name", name)
@@ -33,10 +36,9 @@ public class AccountRepository {
 
     public Optional<Account> findById(int accountId) {
         String sql = """
-                SELECT id, name, password, pin, pic, birthdate, gender, tos_accepted, chr_slots, login_state,
-                    last_login, banned, banned_until, ban_reason, ban_description
-                FROM account
-                WHERE id = :id""";
+                SELECT %s
+                FROM account AS a
+                WHERE id = :id""".formatted(SELECT_ACCOUNT_COLS);
         try (Handle handle = connection.getHandle()) {
             return handle.createQuery(sql)
                     .bind("id", accountId)
@@ -45,16 +47,16 @@ public class AccountRepository {
         }
     }
 
-    public Optional<Integer> findIdByChrNameIgnoreCase(String name) {
+    public Optional<Account> findByChrNameIgnoreCase(String name) {
         String sql = """
-                SELECT id
+                SELECT %s
                 FROM account AS a
                 INNER JOIN chr AS c ON a.id = c.account
-                WHERE lower(c.name) = lower(:name)""";
+                WHERE lower(c.name) = lower(:name)""".formatted(SELECT_ACCOUNT_COLS);
         try (Handle handle = connection.getHandle()) {
             return handle.createQuery(sql)
                     .bind("name", name)
-                    .mapTo(Integer.class)
+                    .mapTo(Account.class)
                     .findOne();
         }
     }
@@ -158,14 +160,14 @@ public class AccountRepository {
     public boolean setBanned(int accountId, Instant bannedUntil, byte banReason, String description) {
         String sql = """
                 UPDATE account
-                SET banned = true, banned_until = :bannedUntil, ban_reason = :banReason, description = :description
+                SET banned = true, banned_until = :bannedUntil, ban_reason = :banReason, ban_description = :banDescription
                 WHERE id = :id""";
         try (Handle handle = connection.getHandle()) {
             return handle.createUpdate(sql)
                     .bind("id", accountId)
                     .bind("bannedUntil", bannedUntil)
                     .bind("banReason", banReason)
-                    .bind("description", description)
+                    .bind("banDescription", description)
                     .execute() > 0;
         }
     }

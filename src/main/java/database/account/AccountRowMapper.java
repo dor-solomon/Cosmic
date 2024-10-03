@@ -2,6 +2,7 @@ package database.account;
 
 import client.LoginState;
 import lombok.extern.slf4j.Slf4j;
+import net.server.coordinator.session.Hwid;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -40,6 +41,11 @@ public class AccountRowMapper implements RowMapper<Account> {
                         .orElse(null))
                 .banReason(rs.getByte("ban_reason"))
                 .banDescription(rs.getString("ban_description"))
+                .ip(rs.getString("ip"))
+                .macs(rs.getString("macs"))
+                .hwid(Optional.ofNullable(rs.getString("hwid"))
+                        .map(Hwid::new)
+                        .orElse(null))
                 .build();
     }
 

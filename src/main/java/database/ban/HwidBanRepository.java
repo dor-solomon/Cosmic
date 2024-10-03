@@ -1,10 +1,12 @@
 package database.ban;
 
 import database.PgDatabaseConnection;
+import lombok.extern.slf4j.Slf4j;
 import org.jdbi.v3.core.Handle;
 
 import java.util.List;
 
+@Slf4j
 public class HwidBanRepository {
     private final PgDatabaseConnection connection;
 
@@ -20,6 +22,21 @@ public class HwidBanRepository {
             return handle.createQuery(sql)
                     .mapTo(HwidBan.class)
                     .list();
+        }
+    }
+
+    public boolean saveHwidBan(String hwid, int accountId) {
+        String sql = """
+                INSERT INTO hwid_ban (hwid, account_id)
+                VALUES (:hwid, :accountId)""";
+        try (Handle handle = connection.getHandle()) {
+            return handle.createUpdate(sql)
+                    .bind("hwid", hwid)
+                    .bind("accountId", accountId)
+                    .execute() > 0;
+        } catch (Exception e) {
+            log.error("Failed to save hwid ban. The hwid is already banned? accountId: {}, hwid: {}", accountId, hwid, e);
+            return false;
         }
     }
 }

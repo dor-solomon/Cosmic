@@ -4,6 +4,7 @@ import client.Character;
 import client.Client;
 import client.autoban.AutobanFactory;
 import config.YamlConfig;
+import database.account.Account;
 import lombok.extern.slf4j.Slf4j;
 import net.packet.Packet;
 import net.server.Server;
@@ -16,6 +17,8 @@ import tools.PacketCreator;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -86,8 +89,6 @@ public class BanService {
         ban(c, victimName, duration, reason, description);
     }
 
-    // TODO: also ban ip and macs. Table "ipbans" and "macbans" (while taking "macfilters" into consideration).
-    // That's how it was done previously, anyway.
     private void ban(Client c, String victimName, Duration duration, byte reason, String description) {
         Character victim = c.getChannelServer().getPlayerStorage().getCharacterByName(victimName);
 
@@ -107,12 +108,16 @@ public class BanService {
     }
 
     private boolean banOfflineChr(String victimName, Duration duration, byte reason, String description) {
-        Optional<Integer> foundAccountId = accountService.getAccountIdByChrName(victimName);
-        if (foundAccountId.isEmpty()) {
+        Optional<Account> foundAccount = accountService.getAccountIdByChrName(victimName);
+        if (foundAccount.isEmpty()) {
             return false;
         }
 
-        saveBan(foundAccountId.get(), duration, reason, description);
+        Account account = foundAccount.get();
+        saveBan(account.id(), duration, reason, description);
+        banIp(account.ip(), account.id());
+        banMacs(account.macs(), account.id());
+        banHwid(account.hwid(), account.id());
         return true;
     }
 
@@ -122,8 +127,13 @@ public class BanService {
         String ip = victim.getClient().getRemoteAddress();
         String enrichedDescription = "[%s] %s (IP: %s)".formatted(description, readableName, ip);
         saveBan(victim.getAccountID(), duration, reason, enrichedDescription);
+        banIp(ip, victim.getAccountID());
+        Account victimAccount = victim.getClient().getAccount();
+        banMacs(victimAccount.macs(), victim.getAccountID());
+        banHwid(victimAccount.hwid(), victim.getAccountID());
+
         victim.sendPacket(PacketCreator.sendPolice("You have been banned by %s.".formatted(c.getPlayer().getName())));
-        TimerManager.getInstance().schedule(() -> transitionService.disconnect(c, false),
+        TimerManager.getInstance().schedule(() -> transitionService.disconnect(victim.getClient(), true),
                 TimeUnit.SECONDS.toMillis(5));
         return true;
     }
@@ -136,6 +146,31 @@ public class BanService {
             bannedUntil = null;
         }
         accountService.ban(accountId, bannedUntil, reason, description);
+    }
+
+    private void banIp(String ip, int accountId) {
+        if (ip == null || ip.isEmpty()) {
+            return;
+        }
+
+        ipBanManager.banIp(ip, accountId);
+    }
+
+    private void banMacs(String macs, int accountId) {
+        if (macs == null || macs.isEmpty()) {
+            return;
+        }
+
+        List<String> macsToBan = Arrays.asList(macs.split(", "));
+        macsToBan.forEach(mac -> macBanManager.banMac(mac, accountId));
+    }
+
+    private void banHwid(Hwid hwid, int accountId) {
+        if (hwid == null) {
+            return;
+        }
+
+        hwidBanManager.banHwid(hwid, accountId);
     }
 
     public boolean isBanned(Client c) {

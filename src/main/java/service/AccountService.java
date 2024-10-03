@@ -91,8 +91,8 @@ public class AccountService {
         return accountRepository.findById(accountId);
     }
 
-    public Optional<Integer> getAccountIdByChrName(String chrName) {
-        return accountRepository.findIdByChrNameIgnoreCase(chrName);
+    public Optional<Account> getAccountIdByChrName(String chrName) {
+        return accountRepository.findByChrNameIgnoreCase(chrName);
     }
 
     public boolean acceptTos(int accountId) {
