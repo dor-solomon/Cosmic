@@ -37,6 +37,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.Pet;
 import client.keybind.KeyBinding;
+import client.keybind.QuickslotBinding;
 import config.YamlConfig;
 import constants.game.GameConstants;
 import database.account.Account;
@@ -237,7 +238,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
                 }
             }
             player.sendKeymap();
-            player.sendQuickmap();
+            sendQuickmap(player);
             player.sendMacros();
 
             // pot bindings being passed through other characters on the account detected thanks to Croosade dev team
@@ -464,6 +465,15 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void sendQuickmap(Character chr) {
+        QuickslotBinding quickslotBinding = chr.getQuickslotBinding();
+        if (quickslotBinding == null) {
+            quickslotBinding = new QuickslotBinding(QuickslotBinding.DEFAULT_QUICKSLOTS);
+        }
+
+        chr.sendPacket(PacketCreator.QuickslotMappedInit(quickslotBinding));
     }
 
     private static List<Pair<Long, PlayerBuffValueHolder>> getLocalStartTimes(List<PlayerBuffValueHolder> lpbvl) {

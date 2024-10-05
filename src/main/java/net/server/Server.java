@@ -832,7 +832,8 @@ public class Server {
     private ChannelDependencies registerChannelDependencies(PgDatabaseConnection connection) {
         CharacterRepository characterRepository = new CharacterRepository();
         MonsterCardRepository monsterCardRepository = new MonsterCardRepository(connection);
-        CharacterSaver characterSaver = new CharacterSaver(connection, characterRepository, monsterCardRepository);
+        CharacterSaver characterSaver = new CharacterSaver(this, connection, characterRepository,
+                monsterCardRepository);
         AccountService accountService = new AccountService(new AccountRepository(connection));
         TransitionService transitionService = new TransitionService(characterSaver, accountService);
         NoteService noteService = new NoteService(new NoteDao(connection));
