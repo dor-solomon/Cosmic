@@ -31,14 +31,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
+      -
+        name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
             ${{ secrets.DOCKERHUB_USERNAME }}/cosmic
             ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch,branch=master,tag=latest    
       -
         name: Build and push
         id: push
@@ -47,10 +49,9 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      
-      - name: Generate artifact attestation
+          labels: ${{ steps.meta.outputs.labels }} 
+      -
+        name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ghcr.io/${{ github.repository }}
