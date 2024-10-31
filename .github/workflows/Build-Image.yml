@@ -3,6 +3,8 @@ name: Build and Push Image
 on:
   workflow_dispatch:
   push:
+    tags:
+      - 'v*'
 
 jobs:
   docker:
@@ -40,6 +42,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/cosmic
             ghcr.io/${{ github.repository }}
           tags: |
+            type=ref,event=tag
             type=raw,value=latest
       -
         name: Build and push
